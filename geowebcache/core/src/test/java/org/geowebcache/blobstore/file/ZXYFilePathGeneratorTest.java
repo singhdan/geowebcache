@@ -1,10 +1,10 @@
 package org.geowebcache.blobstore.file;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.easymock.EasyMock.createMock;
 import static org.easymock.EasyMock.eq;
 import static org.easymock.EasyMock.expect;
 import static org.easymock.EasyMock.replay;
+import static org.junit.Assert.assertEquals;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,8 +19,6 @@ import org.geowebcache.grid.GridSet;
 import org.geowebcache.grid.GridSubsetFactory;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.TileLayerDispatcher;
-import org.geowebcache.locks.LockProvider;
-import org.geowebcache.locks.NoOpLockProvider;
 import org.geowebcache.mime.ImageMime;
 import org.geowebcache.storage.TileObject;
 import org.geowebcache.storage.blobstore.file.FilePathGenerator;
@@ -54,7 +52,6 @@ public class ZXYFilePathGeneratorTest {
         testRoot.mkdir();
 
         TileLayerDispatcher layers = createMock(TileLayerDispatcher.class);
-        LockProvider lockProvider = new NoOpLockProvider();
         String name = "states";
         TileLayer mock = createMock(name, TileLayer.class);
         expect(mock.getName()).andStubReturn(name);
@@ -83,7 +80,7 @@ public class ZXYFilePathGeneratorTest {
 
     @Test
     public void testPathWithParams() throws Exception {
-        Map<String, String> params = new HashMap<String, String>();
+        Map<String, String> params = new HashMap<>();
         params.put("style", "population");
         TileObject tile =
                 TileObject.createCompleteTileObject(

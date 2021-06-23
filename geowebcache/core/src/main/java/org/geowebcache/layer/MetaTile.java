@@ -15,7 +15,8 @@
 package org.geowebcache.layer;
 
 import it.geosolutions.jaiext.BufferedImageAdapter;
-import java.awt.*;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.awt.image.RenderedImage;
 import java.io.IOException;
@@ -24,9 +25,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Vector;
 import javax.imageio.IIOImage;
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
 import javax.imageio.ImageWriteParam;
 import javax.imageio.ImageWriter;
 import javax.imageio.stream.ImageInputStream;
@@ -216,7 +217,7 @@ public class MetaTile implements TileResponseReceiver {
     }
 
     public void setStatus(int status) {
-        this.status = (long) status;
+        this.status = status;
     }
 
     public boolean getError() {
@@ -330,7 +331,7 @@ public class MetaTile implements TileResponseReceiver {
         }
         log.trace("native accel not available, returning buffered image");
         BufferedImage tile = cropped.getAsBufferedImage();
-        disposePlanarImageChain(cropped, new HashSet<PlanarImage>());
+        disposePlanarImageChain(cropped, new HashSet<>());
         return tile;
     }
 
@@ -383,7 +384,7 @@ public class MetaTile implements TileResponseReceiver {
 
     protected void disposeLater(RenderedImage tile) {
         if (disposableImages == null) {
-            disposableImages = new ArrayList<RenderedImage>(tiles.length);
+            disposableImages = new ArrayList<>(tiles.length);
         }
         disposableImages.add(tile);
     }
@@ -486,7 +487,7 @@ public class MetaTile implements TileResponseReceiver {
         if (image instanceof BufferedImage) {
             ((BufferedImage) image).flush();
         } else if (image instanceof PlanarImage) {
-            disposePlanarImageChain((PlanarImage) image, new HashSet<PlanarImage>());
+            disposePlanarImageChain((PlanarImage) image, new HashSet<>());
         }
         if (disposableImages != null) {
             for (RenderedImage tile : disposableImages) {
@@ -496,7 +497,7 @@ public class MetaTile implements TileResponseReceiver {
                 if (tile instanceof BufferedImage) {
                     ((BufferedImage) tile).flush();
                 } else if (tile instanceof PlanarImage) {
-                    disposePlanarImageChain((PlanarImage) tile, new HashSet<PlanarImage>());
+                    disposePlanarImageChain((PlanarImage) tile, new HashSet<>());
                 }
             }
         }
@@ -505,7 +506,7 @@ public class MetaTile implements TileResponseReceiver {
 
     @SuppressWarnings("rawtypes")
     protected static void disposePlanarImageChain(PlanarImage pi, HashSet<PlanarImage> visited) {
-        Vector sinks = pi.getSinks();
+        List sinks = pi.getSinks();
         // check all the sinks (the image might be in the middle of a chain)
         if (sinks != null) {
             for (Object sink : sinks) {
@@ -521,7 +522,7 @@ public class MetaTile implements TileResponseReceiver {
         visited.add(pi);
 
         // check the image sources
-        Vector sources = pi.getSources();
+        List sources = pi.getSources();
         if (sources != null) {
             for (Object child : sources) {
                 if (child instanceof PlanarImage && !visited.contains(child)) {
@@ -544,6 +545,9 @@ public class MetaTile implements TileResponseReceiver {
                     } catch (IOException e) {
                         // fine, we tried
                     }
+                } else if (param instanceof ImageReader) {
+                    ImageReader reader = (ImageReader) param;
+                    reader.dispose();
                 }
             }
         }

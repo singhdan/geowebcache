@@ -29,7 +29,10 @@ import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import org.geowebcache.config.*;
+import org.geowebcache.config.BlobStoreInfo;
+import org.geowebcache.config.ContextualConfigurationProvider;
+import org.geowebcache.config.XMLConfiguration;
+import org.geowebcache.config.XMLGridSet;
 import org.geowebcache.grid.GridSet;
 import org.geowebcache.io.GeoWebCacheXStream;
 import org.geowebcache.layer.TileLayer;
@@ -97,6 +100,7 @@ public class GWCConverter<T> extends AbstractHttpMessageConverter<T>
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     protected T readInternal(Class<? extends T> clazz, HttpInputMessage httpInputMessage)
             throws IOException, HttpMessageNotReadableException {
         MediaType contentType = httpInputMessage.getHeaders().getContentType();

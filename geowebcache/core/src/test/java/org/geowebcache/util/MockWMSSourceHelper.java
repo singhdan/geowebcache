@@ -2,7 +2,6 @@ package org.geowebcache.util;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
-import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
@@ -25,9 +24,7 @@ import org.geowebcache.layer.wms.WMSSourceHelper;
 import org.geowebcache.mime.MimeType;
 
 public class MockWMSSourceHelper extends WMSSourceHelper {
-    private Font font = Font.decode("Arial-BOLD-14");
-
-    private Map<List<Integer>, byte[]> images = new HashMap<List<Integer>, byte[]>();
+    private Map<List<Integer>, byte[]> images = new HashMap<>();
 
     @Override
     protected void makeRequest(
@@ -37,7 +34,6 @@ public class MockWMSSourceHelper extends WMSSourceHelper {
             MimeType expectedMimeType,
             Resource target)
             throws GeoWebCacheException {
-        long ts = System.currentTimeMillis();
         long[][] tiles;
         int tileW;
         int tileH;
@@ -69,8 +65,8 @@ public class MockWMSSourceHelper extends WMSSourceHelper {
         if (result == null) {
             synchronized (images) {
                 if ((result = images.get(wh)) == null) {
-                    BufferedImage img;
-                    img = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                    BufferedImage img =
+                            new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                     Graphics2D graphics = img.createGraphics();
                     graphics.setColor(Color.LIGHT_GRAY);
                     graphics.fillRect(0, 0, width, height);

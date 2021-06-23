@@ -12,7 +12,12 @@
  */
 package org.geowebcache.storage.blobstore.memory;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
@@ -31,7 +36,9 @@ import org.geowebcache.storage.StorageBrokerTest;
 import org.geowebcache.storage.TileObject;
 import org.geowebcache.storage.blobstore.file.FileBlobStore;
 import org.geowebcache.storage.blobstore.memory.guava.GuavaCacheProvider;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * This test class is used for testing {@link
@@ -85,7 +92,7 @@ public class MemoryBlobStoreTest {
         // Put a TileObject
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
         long[] xyz = {1L, 2L, 3L};
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         TileObject to =
@@ -103,9 +110,10 @@ public class MemoryBlobStoreTest {
         assertEquals(to.getBlobFormat(), to2.getBlobFormat());
 
         // Checks if the resources are equals
-        InputStream is = to.getBlob().getInputStream();
-        InputStream is2 = to2.getBlob().getInputStream();
-        checkInputStreams(is, is2);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is2 = to2.getBlob().getInputStream()) {
+            checkInputStreams(is, is2);
+        }
 
         // Ensure Cache contains the result
         TileObject to3 = cache.getTileObj(to);
@@ -113,9 +121,10 @@ public class MemoryBlobStoreTest {
         assertEquals(to.getBlobFormat(), to3.getBlobFormat());
 
         // Checks if the resources are equals
-        is = to.getBlob().getInputStream();
-        InputStream is3 = to3.getBlob().getInputStream();
-        checkInputStreams(is, is3);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is3 = to3.getBlob().getInputStream()) {
+            checkInputStreams(is, is3);
+        }
 
         // Ensure that NullBlobStore does not contain anything
         assertFalse(nbs.get(to));
@@ -134,7 +143,7 @@ public class MemoryBlobStoreTest {
         // Put a TileObject
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
         long[] xyz = {1L, 2L, 3L};
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         TileObject to =
@@ -153,9 +162,10 @@ public class MemoryBlobStoreTest {
         assertEquals(to.getBlobFormat(), to2.getBlobFormat());
 
         // Checks if the resources are equals
-        InputStream is = to.getBlob().getInputStream();
-        InputStream is2 = to2.getBlob().getInputStream();
-        checkInputStreams(is, is2);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is2 = to2.getBlob().getInputStream()) {
+            checkInputStreams(is, is2);
+        }
 
         // Ensure Cache contains the result
         TileObject to3 = cache.getTileObj(to);
@@ -163,9 +173,10 @@ public class MemoryBlobStoreTest {
         assertEquals(to.getBlobFormat(), to3.getBlobFormat());
 
         // Checks if the resources are equals
-        is = to.getBlob().getInputStream();
-        InputStream is3 = to3.getBlob().getInputStream();
-        checkInputStreams(is, is3);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is3 = to3.getBlob().getInputStream()) {
+            checkInputStreams(is, is3);
+        }
     }
 
     @Test
@@ -178,7 +189,7 @@ public class MemoryBlobStoreTest {
         mbs.setStore(fbs);
         mbs.setCacheProvider(cache);
 
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
 
@@ -198,9 +209,10 @@ public class MemoryBlobStoreTest {
         mbs.get(to2);
 
         // Checks if the resources are equals
-        InputStream is = to2.getBlob().getInputStream();
-        InputStream is2 = bytes.getInputStream();
-        checkInputStreams(is, is2);
+        try (InputStream is = to2.getBlob().getInputStream();
+                InputStream is2 = bytes.getInputStream()) {
+            checkInputStreams(is, is2);
+        }
 
         // Delete TileObject
         TileObject to3 =
@@ -232,7 +244,7 @@ public class MemoryBlobStoreTest {
         // Put a TileObject
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
         long[] xyz = {1L, 2L, 3L};
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         TileObject to =
@@ -282,6 +294,7 @@ public class MemoryBlobStoreTest {
     /**
      * Checks if the streams are equals, note that this method also closes the {@link InputStream}
      */
+    @SuppressWarnings("PMD.UseTryWithResources") // provided as method params, handle in java 11
     private void checkInputStreams(InputStream is, InputStream is2) throws IOException {
         try {
             assertTrue(IOUtils.contentEquals(is, is2));
@@ -290,13 +303,13 @@ public class MemoryBlobStoreTest {
                 is.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
-                assertTrue(false);
+                fail();
             }
             try {
                 is2.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
-                assertTrue(false);
+                fail();
             }
         }
     }

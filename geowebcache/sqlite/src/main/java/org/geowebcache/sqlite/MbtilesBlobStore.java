@@ -235,9 +235,8 @@ public final class MbtilesBlobStore extends SqliteBlobStore {
                         true,
                         connection -> {
                             // instantiating geotools mbtiles reader
-                            MBTilesFile mbtiles =
-                                    GeoToolsMbtilesUtils.getMBTilesFile(connection, file);
-                            try {
+                            try (MBTilesFile mbtiles =
+                                    GeoToolsMbtilesUtils.getMBTilesFile(connection, file)) {
 
                                 final boolean gzipped = tileIsGzipped(tile);
 
@@ -279,8 +278,6 @@ public final class MbtilesBlobStore extends SqliteBlobStore {
                                         "Error loading tile '%s' from MBTiles file '%s'.",
                                         tile,
                                         file);
-                            } finally {
-                                mbtiles.close();
                             }
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(
@@ -481,7 +478,8 @@ public final class MbtilesBlobStore extends SqliteBlobStore {
             return false;
         }
         // let's delete the tiles
-        CompletionService completionService = new ExecutorCompletionService(executorService);
+        CompletionService<Boolean> completionService =
+                new ExecutorCompletionService<>(executorService);
         int tasks = 0;
         for (Map.Entry<File, List<long[]>> entry : files.entrySet()) {
             // FIXME: should we tell something to the listeners ?
@@ -583,7 +581,8 @@ public final class MbtilesBlobStore extends SqliteBlobStore {
             return false;
         }
         // asking the connection manager to remove the database files
-        CompletionService completionService = new ExecutorCompletionService(executorService);
+        CompletionService<Boolean> completionService =
+                new ExecutorCompletionService<>(executorService);
         int tasks = 0;
         for (File file : files) {
             completionService.submit(() -> connectionManager.delete(file), true);
@@ -810,26 +809,23 @@ public final class MbtilesBlobStore extends SqliteBlobStore {
 
     public Map<String, Optional<Map<String, String>>> getParametersMapping(String layerName) {
         try {
-            return (Map<String, Optional<Map<String, String>>>)
-                    connectionManager.executeQuery(
-                            metadataFile,
-                            resultSet -> {
-                                try {
-                                    Map<String, Optional<Map<String, String>>> result =
-                                            new HashMap<>();
-                                    while (resultSet.next()) {
-                                        Map<String, String> params =
-                                                ParametersUtils.getMap(resultSet.getString(1));
-                                        result.put(
-                                                ParametersUtils.getId(params), Optional.of(params));
-                                    }
-                                    return result;
-                                } catch (Exception exception) {
-                                    throw Utils.exception(exception, "Error reading result set.");
-                                }
-                            },
-                            "SELECT value FROM metadata WHERE layerName = ? AND key like 'parameters.%';",
-                            layerName);
+            return connectionManager.executeQuery(
+                    metadataFile,
+                    resultSet -> {
+                        try {
+                            Map<String, Optional<Map<String, String>>> result = new HashMap<>();
+                            while (resultSet.next()) {
+                                Map<String, String> params =
+                                        ParametersUtils.getMap(resultSet.getString(1));
+                                result.put(ParametersUtils.getId(params), Optional.of(params));
+                            }
+                            return result;
+                        } catch (Exception exception) {
+                            throw Utils.exception(exception, "Error reading result set.");
+                        }
+                    },
+                    "SELECT value FROM metadata WHERE layerName = ? AND key like 'parameters.%';",
+                    layerName);
         } catch (Exception exception) {
             // probably because the metadata table doesn't exists
             if (LOGGER.isErrorEnabled()) {

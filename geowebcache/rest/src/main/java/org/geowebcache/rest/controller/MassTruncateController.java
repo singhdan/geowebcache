@@ -33,7 +33,12 @@ import org.apache.commons.logging.LogFactory;
 import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.io.GeoWebCacheXStream;
 import org.geowebcache.rest.exception.RestException;
-import org.geowebcache.seed.*;
+import org.geowebcache.seed.MassTruncateRequest;
+import org.geowebcache.seed.TileBreeder;
+import org.geowebcache.seed.TruncateBboxRequest;
+import org.geowebcache.seed.TruncateLayerRequest;
+import org.geowebcache.seed.TruncateOrphansRequest;
+import org.geowebcache.seed.TruncateParametersRequest;
 import org.geowebcache.storage.StorageBroker;
 import org.geowebcache.storage.StorageException;
 import org.geowebcache.util.ApplicationContextProvider;
@@ -92,7 +97,7 @@ public class MassTruncateController extends GWCSeedingController {
         // Not worth the trouble of messing with XStream for the output so just assemble some XML.
 
         StringBuilder sb = new StringBuilder();
-        Set<String> result = new HashSet<String>();
+        Set<String> result = new HashSet<>();
         sb.append("<massTruncateRequests href=\"").append(req.getRequestURL()).append("\">");
 
         for (Class<?> requestType : getRequestTypes()) {
@@ -141,9 +146,7 @@ public class MassTruncateController extends GWCSeedingController {
             }
         } catch (IllegalArgumentException e) {
             throw new RestException(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (StorageException e) {
-            throw new RestException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (GeoWebCacheException e) {
+        } catch (StorageException | GeoWebCacheException e) {
             throw new RestException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
         return mtr.getResponse(contentType);
@@ -157,9 +160,7 @@ public class MassTruncateController extends GWCSeedingController {
             }
         } catch (IllegalArgumentException e) {
             throw new RestException(e.getMessage(), HttpStatus.BAD_REQUEST);
-        } catch (StorageException e) {
-            throw new RestException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
-        } catch (GeoWebCacheException e) {
+        } catch (StorageException | GeoWebCacheException e) {
             throw new RestException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }

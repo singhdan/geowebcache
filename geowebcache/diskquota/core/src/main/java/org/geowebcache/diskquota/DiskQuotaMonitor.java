@@ -111,8 +111,7 @@ public class DiskQuotaMonitor implements InitializingBean, DisposableBean {
             final CacheCleaner cacheCleaner)
             throws IOException, ConfigurationException {
 
-        boolean disabled =
-                Boolean.valueOf(storageFinder.findEnvVar(GWC_DISKQUOTA_DISABLED)).booleanValue();
+        boolean disabled = Boolean.parseBoolean(storageFinder.findEnvVar(GWC_DISKQUOTA_DISABLED));
         if (disabled) {
             log.warn(
                     " -- Found environment variable "
@@ -327,9 +326,7 @@ public class DiskQuotaMonitor implements InitializingBean, DisposableBean {
         Assert.isTrue(diskQuotaEnabled, "called saveConfig but DiskQuota is disabled!");
         try {
             configLoader.saveConfig(config);
-        } catch (ConfigurationException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (ConfigurationException | IOException e) {
             throw new RuntimeException(e);
         }
         if (config != quotaConfig) {
@@ -354,14 +351,13 @@ public class DiskQuotaMonitor implements InitializingBean, DisposableBean {
      */
     private LayerCacheInfoBuilder launchCacheInfoGatheringThreads() throws InterruptedException {
 
-        LayerCacheInfoBuilder cacheInfoBuilder;
         File cacheRoot;
         try {
             cacheRoot = new File(storageFinder.getDefaultPath());
         } catch (ConfigurationException e) {
             throw new RuntimeException(e);
         }
-        cacheInfoBuilder =
+        LayerCacheInfoBuilder cacheInfoBuilder =
                 new LayerCacheInfoBuilder(cacheRoot, cleanUpExecutorService, quotaUsageMonitor);
 
         for (String layerName : tileLayerDispatcher.getLayerNames()) {

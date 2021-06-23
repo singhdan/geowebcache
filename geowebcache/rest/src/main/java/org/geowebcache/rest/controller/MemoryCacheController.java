@@ -100,14 +100,14 @@ public class MemoryCacheController {
                 try {
                     entity = getJsonRepresentation(statistics);
                 } catch (JSONException e) {
-                    entity = new ResponseEntity<Object>(HttpStatus.INTERNAL_SERVER_ERROR);
+                    entity = new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             } else {
                 entity = getXmlRepresentation(statistics);
             }
         } else {
             entity =
-                    new ResponseEntity<Object>(
+                    new ResponseEntity<>(
                             "No statistics available for the current BlobStore: "
                                     + (store != null ? store.getClass() : null),
                             HttpStatus.NOT_FOUND);
@@ -127,7 +127,7 @@ public class MemoryCacheController {
                         context,
                         Context.REST);
         JSONObject obj = new JSONObject(xs.toXML(stats));
-        return new ResponseEntity(obj.toString(), HttpStatus.OK);
+        return new ResponseEntity<>(obj.toString(), HttpStatus.OK);
     }
 
     /**
@@ -139,7 +139,7 @@ public class MemoryCacheController {
         XStream xStream = getConfiguredXStream(new GeoWebCacheXStream());
         String xmlText = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + xStream.toXML(stats);
 
-        return new ResponseEntity(xmlText, HttpStatus.OK);
+        return new ResponseEntity<>(xmlText, HttpStatus.OK);
     }
 
     /**

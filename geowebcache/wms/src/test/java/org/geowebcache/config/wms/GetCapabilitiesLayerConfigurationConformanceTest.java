@@ -25,14 +25,16 @@ import java.util.LinkedList;
 import java.util.List;
 import org.easymock.EasyMock;
 import org.geotools.data.ows.OperationType;
-import org.geotools.ows.wms.*;
+import org.geotools.ows.wms.CRSEnvelope;
+import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.WMSCapabilities;
+import org.geotools.ows.wms.WMSRequest;
+import org.geotools.ows.wms.WebMapServer;
 import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.config.DefaultingConfiguration;
 import org.geowebcache.config.LayerConfigurationTest;
 import org.geowebcache.config.TileLayerConfiguration;
-import org.geowebcache.filter.parameters.ParameterFilter;
 import org.geowebcache.grid.GridSetBroker;
-import org.geowebcache.grid.GridSubset;
 import org.geowebcache.grid.GridSubsetFactory;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.wms.WMSLayer;
@@ -67,10 +69,10 @@ public class GetCapabilitiesLayerConfigurationConformanceTest extends LayerConfi
                 new String[] {"http://foo"},
                 "style",
                 Integer.toString(rand),
-                Collections.<String>emptyList(),
-                Collections.<String, GridSubset>singletonMap(
+                Collections.emptyList(),
+                Collections.singletonMap(
                         "EPSG:4326", GridSubsetFactory.createGridSubSet(broker.getWorldEpsg4326())),
-                Collections.<ParameterFilter>emptyList(),
+                Collections.emptyList(),
                 new int[] {3, 3},
                 "",
                 false,
@@ -109,7 +111,7 @@ public class GetCapabilitiesLayerConfigurationConformanceTest extends LayerConfi
         Layer l = new Layer();
         l.setName("testExisting");
         l.setLatLonBoundingBox(new CRSEnvelope());
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
         layers.add(l);
         expect(cap.getLayerList()).andReturn(layers);
 
@@ -189,6 +191,7 @@ public class GetCapabilitiesLayerConfigurationConformanceTest extends LayerConfi
     }
 
     @Override
+    @Test
     public void testCanSaveGoodInfo() throws Exception {
         // Should not be able to save anything as it is read only
         assertThat(config.canSave(getGoodInfo("test", 1)), equalTo(false));

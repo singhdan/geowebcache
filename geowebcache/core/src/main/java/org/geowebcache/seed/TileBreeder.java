@@ -126,7 +126,7 @@ public class TileBreeder implements ApplicationContextAware {
      */
     public static long TOTAL_FAILURES_BEFORE_ABORTING_DEFAULT = 1000;
 
-    private Map<Long, SubmittedTask> currentPool = new TreeMap<Long, SubmittedTask>();
+    private Map<Long, SubmittedTask> currentPool = new TreeMap<>();
 
     private AtomicLong currentId = new AtomicLong();
 
@@ -303,9 +303,9 @@ public class TileBreeder implements ApplicationContextAware {
     public void dispatchTasks(GWCTask[] tasks) {
         lock.writeLock().lock();
         try {
-            for (int i = 0; i < tasks.length; i++) {
+            for (GWCTask gwcTask : tasks) {
                 final Long taskId = this.currentId.incrementAndGet();
-                final GWCTask task = tasks[i];
+                final GWCTask task = gwcTask;
                 task.setTaskId(taskId);
                 Future<GWCTask> future = threadPool.submit(new MTSeeder(task));
                 this.currentPool.put(taskId, new SubmittedTask(task, future));
@@ -432,7 +432,7 @@ public class TileBreeder implements ApplicationContextAware {
      * @param layerName the name of the layer. null for all layers.
      */
     public long[][] getStatusList(final String layerName) {
-        List<long[]> list = new ArrayList<long[]>(currentPool.size());
+        List<long[]> list = new ArrayList<>(currentPool.size());
 
         lock.readLock().lock();
         try {
@@ -515,9 +515,8 @@ public class TileBreeder implements ApplicationContextAware {
      * @throws GeoWebCacheException if the layer is not found
      */
     public TileLayer findTileLayer(String layerName) throws GeoWebCacheException {
-        TileLayer layer = null;
 
-        layer = layerDispatcher.getTileLayer(layerName);
+        TileLayer layer = layerDispatcher.getTileLayer(layerName);
 
         if (layer == null) {
             throw new GeoWebCacheException("Unknown layer: " + layerName);
@@ -550,9 +549,9 @@ public class TileBreeder implements ApplicationContextAware {
      * @param filter the states to filter for
      */
     private Iterator<GWCTask> filterTasks(STATE... filter) {
-        Set<STATE> states = new HashSet<STATE>(Arrays.asList(filter));
+        Set<STATE> states = new HashSet<>(Arrays.asList(filter));
         lock.readLock().lock();
-        List<GWCTask> runningTasks = new ArrayList<GWCTask>(this.currentPool.size());
+        List<GWCTask> runningTasks = new ArrayList<>(this.currentPool.size());
         try {
             Collection<SubmittedTask> values = this.currentPool.values();
             for (SubmittedTask t : values) {

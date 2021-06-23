@@ -1,14 +1,15 @@
 package org.geowebcache.grid;
 
-import java.util.Arrays;
-import junit.framework.TestCase;
+import static org.junit.Assert.assertArrayEquals;
 
-public class BoundingBoxTest extends TestCase {
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-    @Override
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+public class BoundingBoxTest {
+
+    @Before
+    public void setUp() throws Exception {}
 
     /**
      * Verifies that this functions output remains as expected, since we communicate a lot using
@@ -16,18 +17,20 @@ public class BoundingBoxTest extends TestCase {
      *
      * <p>Ff not you should figure out where it is used.
      */
+    @Test
     public void testBBOX() throws Exception {
         BoundingBox bbox = new BoundingBox(-180.0, -90.0, 180.0, 90.0);
         assert (bbox.isSane());
 
         String bboxStr = bbox.toString();
         if (bboxStr.equalsIgnoreCase("-180.0,-90.0,180.0,90.0")) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         } else {
-            assertTrue(false);
+            Assert.fail();
         }
     }
 
+    @Test
     public void testBBOXScale() throws Exception {
         BoundingBox bbox = new BoundingBox(-180.0, -90.0, 180.0, 90.0);
 
@@ -40,26 +43,28 @@ public class BoundingBoxTest extends TestCase {
         assert (bbox.equals(copy));
     }
 
+    @Test
     public void testIntersection() throws Exception {
         BoundingBox bb1 = new BoundingBox(0, 0, 10, 10);
         BoundingBox bb2 = new BoundingBox(5, 5, 20, 20);
 
         BoundingBox intersection = BoundingBox.intersection(bb1, bb2);
-        assertNotNull(intersection);
-        assertEquals(5D, intersection.getWidth());
-        assertEquals(5D, intersection.getHeight());
-        assertTrue(intersection.isSane());
-        assertTrue(Arrays.equals(new double[] {5, 5, 10, 10}, intersection.getCoords()));
+        Assert.assertNotNull(intersection);
+        Assert.assertEquals(5D, intersection.getWidth(), 0d);
+        Assert.assertEquals(5D, intersection.getHeight(), 0d);
+        Assert.assertTrue(intersection.isSane());
+        assertArrayEquals(new double[] {5, 5, 10, 10}, intersection.getCoords(), 0.0);
     }
 
     /** Two bboxes don't intersect, BoundingBox.intersection()'s result should be the empty bbox */
+    @Test
     public void testIntersectionNonIntersecting() throws Exception {
         BoundingBox bb1 = new BoundingBox(0, 0, 10, 10);
         BoundingBox bb2 = new BoundingBox(11, 11, 20, 20);
 
         BoundingBox intersection = BoundingBox.intersection(bb1, bb2);
-        assertNotNull(intersection);
-        assertTrue(intersection.isNull());
-        assertFalse(intersection.isSane());
+        Assert.assertNotNull(intersection);
+        Assert.assertTrue(intersection.isNull());
+        Assert.assertFalse(intersection.isSane());
     }
 }

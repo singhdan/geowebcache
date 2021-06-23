@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimeZone;
 import javax.servlet.http.HttpServletRequest;
-import org.apache.commons.collections.map.CaseInsensitiveMap;
+import org.apache.commons.collections4.map.CaseInsensitiveMap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -53,7 +53,7 @@ public class ServletUtils {
      * @return all matchings string
      */
     public static String[] stringsFromMap(Map<String, String[]> map, String encoding, String key) {
-        String[] strArray = (String[]) map.get(key);
+        String[] strArray = map.get(key);
 
         if (strArray != null) {
             return strArray;
@@ -260,8 +260,8 @@ public class ServletUtils {
     public static String hexOfBytes(byte[] bytes) {
         StringBuilder str = new StringBuilder(bytes.length * 2);
 
-        for (int i = 0; i < bytes.length; i++) {
-            str.append(hexOfByte(bytes[i]));
+        for (byte aByte : bytes) {
+            str.append(hexOfByte(aByte));
         }
 
         return str.toString();
@@ -272,7 +272,7 @@ public class ServletUtils {
         char[] str = new char[2];
 
         for (int i = 0; i < 2; i++) {
-            int temp = (int) aByte;
+            int temp = aByte;
             if (temp < 0) {
                 temp += 256;
             }
@@ -398,7 +398,7 @@ public class ServletUtils {
             return Collections.emptyMap();
         }
         String[] params = queryString.split("&");
-        Map<String, String> ret = new HashMap<String, String>();
+        Map<String, String> ret = new HashMap<>();
         for (String kvp : params) {
             String[] split = kvp.split("=");
             if (split[0].length() > 0) {

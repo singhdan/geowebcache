@@ -30,7 +30,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.GeoWebCacheExtensions;
-import org.geowebcache.config.*;
+import org.geowebcache.config.BlobStoreConfigurationListener;
+import org.geowebcache.config.BlobStoreInfo;
+import org.geowebcache.config.ConfigurationException;
+import org.geowebcache.config.FileBlobStoreInfo;
+import org.geowebcache.config.ServerConfiguration;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.TileLayerDispatcher;
 import org.geowebcache.locks.LockProvider;
@@ -377,8 +381,7 @@ public class CompositeBlobStore implements BlobStore, BlobStoreConfigurationList
                 config.setEnabled(true);
                 config.setDefault(true);
                 config.setBaseDirectory(defaultStorageFinder.getDefaultPath());
-                BlobStore store;
-                store = new FileBlobStore(config.getBaseDirectory());
+                BlobStore store = new FileBlobStore(config.getBaseDirectory());
 
                 stores.put(
                         CompositeBlobStore.DEFAULT_STORE_DEFAULT_ID, new LiveStore(config, store));

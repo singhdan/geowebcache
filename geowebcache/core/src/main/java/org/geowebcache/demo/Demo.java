@@ -18,7 +18,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -176,7 +175,7 @@ public class Demo {
             StringBuffer buf, TileLayerDispatcher tileLayerDispatcher, GridSetBroker gridSetBroker)
             throws GeoWebCacheException {
 
-        Set<String> layerList = new TreeSet<String>(tileLayerDispatcher.getLayerNames());
+        Set<String> layerList = new TreeSet<>(tileLayerDispatcher.getLayerNames());
         for (String layerName : layerList) {
             TileLayer layer = tileLayerDispatcher.getTileLayer(layerName);
             if (!layer.isAdvertised()) {
@@ -657,17 +656,11 @@ public class Demo {
 
     private static String makeModifiableParameters(TileLayer tl) {
         List<ParameterFilter> parameterFilters = tl.getParameterFilters();
-        if (parameterFilters == null || parameterFilters.size() == 0) {
+        if (parameterFilters == null || parameterFilters.isEmpty()) {
             return "";
         }
-        parameterFilters = new ArrayList<ParameterFilter>(parameterFilters);
-        Collections.sort(
-                parameterFilters,
-                new Comparator<ParameterFilter>() {
-                    public int compare(ParameterFilter o1, ParameterFilter o2) {
-                        return o1.getKey().compareTo(o2.getKey());
-                    }
-                });
+        parameterFilters = new ArrayList<>(parameterFilters);
+        Collections.sort(parameterFilters, (o1, o2) -> o1.getKey().compareTo(o2.getKey()));
         StringBuilder doc = new StringBuilder();
         doc.append("Modifiable Parameters:\n");
         doc.append("<table>\n");
@@ -714,7 +707,7 @@ public class Demo {
 
     private static Map<String, String> makeParametersMap(
             String defaultValue, List<String> legalValues) {
-        Map<String, String> map = new TreeMap<String, String>();
+        Map<String, String> map = new TreeMap<>();
         for (String s : legalValues) {
             map.put(s, s);
         }

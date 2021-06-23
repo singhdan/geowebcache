@@ -114,8 +114,7 @@ public class BDBQuotaStore implements QuotaStore {
         this.tilePageCalculator = tilePageCalculator;
         this.cacheRootDir = cacheDirFinder.getDefaultPath();
 
-        boolean disabled =
-                Boolean.valueOf(cacheDirFinder.findEnvVar(GWC_DISKQUOTA_DISABLED)).booleanValue();
+        boolean disabled = Boolean.parseBoolean(cacheDirFinder.findEnvVar(GWC_DISKQUOTA_DISABLED));
         if (disabled) {
             log.warn(
                     " -- Found environment variable "
@@ -249,7 +248,7 @@ public class BDBQuotaStore implements QuotaStore {
                 final Set<String> layerNames = tilePageCalculator.getLayerNames();
                 final Set<String> existingLayers = new GetLayerNames().call();
 
-                final Set<String> layersToDelete = new HashSet<String>(existingLayers);
+                final Set<String> layersToDelete = new HashSet<>(existingLayers);
                 layersToDelete.removeAll(layerNames);
 
                 for (String layerName : layersToDelete) {
@@ -285,20 +284,18 @@ public class BDBQuotaStore implements QuotaStore {
     /** @see org.geowebcache.diskquota.QuotaStore#createLayer(java.lang.String) */
     public void createLayer(final String layerName) throws InterruptedException {
         issueSync(
-                new Callable<Void>() {
-
-                    public Void call() throws Exception {
-                        final Transaction transaction =
-                                entityStore.getEnvironment().beginTransaction(null, null);
-                        try {
-                            createLayer(layerName, transaction);
-                            transaction.commit();
-                        } catch (RuntimeException e) {
-                            transaction.abort();
-                        }
-                        return null;
-                    }
-                });
+                (Callable<Void>)
+                        () -> {
+                            final Transaction transaction =
+                                    entityStore.getEnvironment().beginTransaction(null, null);
+                            try {
+                                createLayer(layerName, transaction);
+                                transaction.commit();
+                            } catch (RuntimeException e) {
+                                transaction.abort();
+                            }
+                            return null;
+                        });
     }
 
     private void createLayer(String layerName, final Transaction transaction) {
@@ -366,7 +363,7 @@ public class BDBQuotaStore implements QuotaStore {
 
         public Set<String> call() throws Exception {
             EntityCursor<String> layerNameCursor = tileSetsByLayer.keys(null, CursorConfig.DEFAULT);
-            Set<String> names = new HashSet<String>();
+            Set<String> names = new HashSet<>();
             try {
                 String name;
                 while ((name = layerNameCursor.nextNoDup()) != null) {
@@ -587,8 +584,7 @@ public class BDBQuotaStore implements QuotaStore {
         public Quota call() throws Exception {
             Quota aggregated = null;
 
-            EntityCursor<TileSet> layerTileSetsIds;
-            layerTileSetsIds =
+            EntityCursor<TileSet> layerTileSetsIds =
                     tileSetsByLayer.entities(
                             null, layerName, true, layerName, true, CursorConfig.DEFAULT);
             TileSet tileSet;
@@ -624,25 +620,21 @@ public class BDBQuotaStore implements QuotaStore {
 
     /** @see org.geowebcache.diskquota.QuotaStore#getTileSets() */
     public Set<TileSet> getTileSets() {
-        Map<String, TileSet> map = new HashMap<String, TileSet>(tileSetById.map());
+        Map<String, TileSet> map = new HashMap<>(tileSetById.map());
         map.remove(GLOBAL_QUOTA_NAME);
-        HashSet<TileSet> hashSet = new HashSet<TileSet>(map.values());
+        HashSet<TileSet> hashSet = new HashSet<>(map.values());
         return hashSet;
     }
 
     /** @see org.geowebcache.diskquota.QuotaStore#getTileSetById(java.lang.String) */
     public TileSet getTileSetById(final String tileSetId) throws InterruptedException {
         return issueSync(
-                new Callable<TileSet>() {
-
-                    public TileSet call() throws Exception {
-                        TileSet tileSet = tileSetById.get(tileSetId);
-                        if (tileSet == null) {
-                            throw new IllegalArgumentException(
-                                    "TileSet does not exist: " + tileSetId);
-                        }
-                        return tileSet;
+                () -> {
+                    TileSet tileSet = tileSetById.get(tileSetId);
+                    if (tileSet == null) {
+                        throw new IllegalArgumentException("TileSet does not exist: " + tileSetId);
                     }
+                    return tileSet;
                 });
     }
 
@@ -705,7 +697,7 @@ public class BDBQuotaStore implements QuotaStore {
                 addToUsedQuota(tx, storedTileset, quotaDiff);
 
                 // and each page's fillFactor for lru/lfu expiration
-                if (tileCountDiffs.size() > 0) {
+                if (!tileCountDiffs.isEmpty()) {
                     TilePage page;
                     String pageKey;
                     for (PageStatsPayload payload : tileCountDiffs) {
@@ -772,7 +764,7 @@ public class BDBQuotaStore implements QuotaStore {
         }
 
         public List<PageStats> call() throws Exception {
-            List<PageStats> allStats = new ArrayList<PageStats>(statsUpdates.size());
+            List<PageStats> allStats = new ArrayList<>(statsUpdates.size());
             PageStats pageStats = null;
             final Transaction tx = entityStore.getEnvironment().beginTransaction(null, null);
             try {
@@ -851,7 +843,7 @@ public class BDBQuotaStore implements QuotaStore {
         public TilePage call() throws Exception {
 
             // find out the tilesets for the requested layers
-            final Set<String> tileSetIds = new HashSet<String>();
+            final Set<String> tileSetIds = new HashSet<>();
             for (String layerName : layerNames) {
                 EntityCursor<TileSet> keys =
                         tileSetsByLayer.entities(layerName, true, layerName, true);

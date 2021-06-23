@@ -48,7 +48,7 @@ public class PNGImageEncoder extends ImageEncoderImpl {
     private final float quality;
 
     static {
-        supportedMimeTypes = new ArrayList<String>();
+        supportedMimeTypes = new ArrayList<>();
         supportedMimeTypes.add(ImageMime.png.getMimeType());
         supportedMimeTypes.add(ImageMime.png8.getMimeType());
         supportedMimeTypes.add(ImageMime.png24.getMimeType());
@@ -104,8 +104,7 @@ public class PNGImageEncoder extends ImageEncoderImpl {
             // Creation of the associated Writer
             PNGWriter writer = new PNGWriter();
             OutputStream stream = null;
-            try {
-                // writer = new PNGJWriter();
+            try { // NOPMD stream not instantiated here
                 // Check if the input object is an OutputStream
                 if (destination instanceof OutputStream) {
                     boolean isScanlinePresent = writer.isScanlineSupported(image);

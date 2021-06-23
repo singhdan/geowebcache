@@ -127,7 +127,7 @@ public class WMSService extends Service {
     public ConveyorTile getConveyor(HttpServletRequest request, HttpServletResponse response)
             throws GeoWebCacheException {
         final String encoding = request.getCharacterEncoding();
-        final Map requestParameterMap = request.getParameterMap();
+        final Map<String, String[]> requestParameterMap = request.getParameterMap();
 
         String[] keys = {"layers", "request", "tiled", "cached", "metatiled", "width", "height"};
         Map<String, String> values =
@@ -469,8 +469,7 @@ public class WMSService extends Service {
     public void setFullWMS(String trueFalse) {
         // Selection of the configurations
         List<TileLayerConfiguration> configs =
-                new ArrayList<TileLayerConfiguration>(
-                        GeoWebCacheExtensions.extensions(TileLayerConfiguration.class));
+                new ArrayList<>(GeoWebCacheExtensions.extensions(TileLayerConfiguration.class));
         // Selection of the TileLayerConfiguration file associated to geowebcache.xml
         ServerConfiguration gwcXMLconfig = null;
         for (BaseConfiguration config : configs) {

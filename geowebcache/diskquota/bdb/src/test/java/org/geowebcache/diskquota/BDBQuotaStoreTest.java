@@ -122,7 +122,7 @@ public class BDBQuotaStoreTest {
                                                         .collect(Collectors.toSet())));
         XMLConfiguration xmlConfig = loadXMLConfig();
         context.addBean("xmlConfig", xmlConfig, XMLConfiguration.class.getInterfaces());
-        LinkedList<TileLayerConfiguration> configList = new LinkedList<TileLayerConfiguration>();
+        LinkedList<TileLayerConfiguration> configList = new LinkedList<>();
         configList.add(xmlConfig);
         context.addBean(
                 "DefaultGridsets",
@@ -460,8 +460,7 @@ public class BDBQuotaStoreTest {
         final String layerName = testTileSet.getLayerName();
         Set<String> layerNames = Collections.singleton(layerName);
 
-        TilePage lfuPage;
-        lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
+        TilePage lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
         assertThat(lfuPage, nullValue());
 
         TilePage page1 = new TilePage(testTileSet.getId(), 0, 1, 2);
@@ -545,8 +544,7 @@ public class BDBQuotaStoreTest {
     @Test
     public void testGetUsedQuotaByLayerName() throws Exception {
         String layerName = "topp:states2";
-        List<TileSet> tileSets;
-        tileSets = new ArrayList<TileSet>(tilePageCalculator.getTileSetsFor(layerName));
+        List<TileSet> tileSets = new ArrayList<>(tilePageCalculator.getTileSetsFor(layerName));
 
         Quota expected = new Quota();
         for (TileSet tset : tileSets) {
@@ -562,10 +560,9 @@ public class BDBQuotaStoreTest {
     @Test
     public void testGetUsedQuotaByTileSetId() throws Exception {
         String layerName = "topp:states2";
-        List<TileSet> tileSets;
-        tileSets = new ArrayList<TileSet>(tilePageCalculator.getTileSetsFor(layerName));
+        List<TileSet> tileSets = new ArrayList<>(tilePageCalculator.getTileSetsFor(layerName));
 
-        Map<String, Quota> expectedById = new HashMap<String, Quota>();
+        Map<String, Quota> expectedById = new HashMap<>();
 
         for (TileSet tset : tileSets) {
             Quota quotaDiff = new Quota(10D * Math.random(), StorageUnit.MiB);
@@ -609,7 +606,7 @@ public class BDBQuotaStoreTest {
 
     static Matcher<Float> closeTo(float f, float epsilon) {
         return new BaseMatcher<Float>() {
-            Matcher<Double> doubleMatcher = Matchers.closeTo((double) f, (double) epsilon);
+            Matcher<Double> doubleMatcher = Matchers.closeTo(f, epsilon);
 
             @Override
             @SuppressWarnings("SelfAssignment") // this actually changes its fp representation

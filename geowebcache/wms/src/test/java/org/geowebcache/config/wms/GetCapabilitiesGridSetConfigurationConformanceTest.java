@@ -28,7 +28,11 @@ import java.util.LinkedList;
 import java.util.List;
 import org.easymock.EasyMock;
 import org.geotools.data.ows.OperationType;
-import org.geotools.ows.wms.*;
+import org.geotools.ows.wms.CRSEnvelope;
+import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.WMSCapabilities;
+import org.geotools.ows.wms.WMSRequest;
+import org.geotools.ows.wms.WebMapServer;
 import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.config.DefaultingConfiguration;
 import org.geowebcache.config.GridSetConfiguration;
@@ -84,7 +88,7 @@ public class GetCapabilitiesGridSetConfigurationConformanceTest extends GridSetC
         l.setName("testExisting");
         l.setBoundingBoxes(new CRSEnvelope("EPSG:3978", -2259049, 347711, -1994160, 827919));
         l.setLatLonBoundingBox(new CRSEnvelope());
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
         layers.add(l);
         expect(cap.getLayerList()).andReturn(layers);
 
@@ -138,10 +142,8 @@ public class GetCapabilitiesGridSetConfigurationConformanceTest extends GridSetC
             @Override
             public boolean matches(Object item) {
                 return item instanceof GridSet
-                        && ((GridSet) item).getName().equals(((GridSet) expected).getName())
-                        && ((GridSet) item)
-                                .getDescription()
-                                .equals(((GridSet) expected).getDescription());
+                        && ((GridSet) item).getName().equals(expected.getName())
+                        && ((GridSet) item).getDescription().equals(expected.getDescription());
             }
         };
     }
@@ -192,6 +194,7 @@ public class GetCapabilitiesGridSetConfigurationConformanceTest extends GridSetC
     }
 
     @Override
+    @Test
     public void testCanSaveGoodInfo() throws Exception {
         // Should not be able to save anything as it is read only
         assertThat(config.canSave(getGoodInfo("test", 1)), equalTo(false));

@@ -21,7 +21,6 @@ import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 import javax.imageio.ImageIO;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -75,7 +74,7 @@ class GeoRSSPollTask implements Runnable {
 
     private final TileBreeder seeder;
 
-    private LinkedList<GWCTask> seedTasks = new LinkedList<GWCTask>();
+    private LinkedList<GWCTask> seedTasks = new LinkedList<>();
 
     public GeoRSSPollTask(final PollDef poll, final TileBreeder seeder) {
         this.poll = poll;
@@ -262,7 +261,7 @@ class GeoRSSPollTask implements Runnable {
             MimeType mime;
             try {
                 mime = MimeType.createFromFormat(pollDef.getFormat());
-                mimeList = new LinkedList<MimeType>();
+                mimeList = new LinkedList<>();
                 mimeList.add(mime);
             } catch (MimeException e) {
                 logger.error(e.getMessage());
@@ -288,7 +287,7 @@ class GeoRSSPollTask implements Runnable {
                             gridSub.getZoomStop(),
                             rasterMask,
                             mimeIter.next(),
-                            (Map<String, String>) null);
+                            null);
             try {
                 GWCTask[] tasks = seeder.createTasks(dtr, layer, GWCTask.TYPE.TRUNCATE, 1, false);
                 tasks[0].doAction();
@@ -318,7 +317,7 @@ class GeoRSSPollTask implements Runnable {
                             gridSub.getZoomStop(),
                             rasterMask,
                             mimeIter.next(),
-                            (Map<String, String>) null);
+                            null);
 
             final int seedingThreads = pollDef.getSeedingThreads();
             GWCTask[] tasks;

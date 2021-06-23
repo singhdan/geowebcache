@@ -165,14 +165,14 @@ public class GeoWebCacheDispatcher extends AbstractController {
         log.info("Loading GWC Service extensions...");
 
         List<Service> plugins = GeoWebCacheExtensions.extensions(Service.class);
-        Map<String, Service> services = new HashMap<String, Service>();
+        Map<String, Service> services = new HashMap<>();
         // Give all service objects direct access to the tileLayerDispatcher
         for (Service aService : plugins) {
             services.put(aService.getPathName(), aService);
         }
         log.info(
                 "Done loading GWC Service extensions. Found : "
-                        + new ArrayList<String>(services.keySet()));
+                        + new ArrayList<>(services.keySet()));
         return services;
     }
 
@@ -283,7 +283,7 @@ public class GeoWebCacheDispatcher extends AbstractController {
                     runtimeStats);
         } catch (RequestFilterException e) {
 
-            RequestFilterException reqE = (RequestFilterException) e;
+            RequestFilterException reqE = e;
             reqE.setHttpInfoHeader(response);
 
             ResponseUtils.writeFixedResponse(
@@ -433,7 +433,7 @@ public class GeoWebCacheDispatcher extends AbstractController {
         }
 
         // E.g. /wms/test -> /wms
-        Service service = (Service) services.get(serviceStr);
+        Service service = services.get(serviceStr);
         if (service == null) {
             if (serviceStr == null || serviceStr.length() == 0) {
                 serviceStr = ", try service/&lt;name of service&gt;";

@@ -14,6 +14,8 @@
  */
 package org.geowebcache.diskquota.storage;
 
+import static org.junit.Assert.assertArrayEquals;
+
 import java.math.BigInteger;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -21,7 +23,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import junit.framework.TestCase;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.diskquota.storage.PagePyramid.PageLevelInfo;
 import org.geowebcache.grid.GridSet;
@@ -29,8 +32,13 @@ import org.geowebcache.grid.GridSetBroker;
 import org.geowebcache.grid.GridSubset;
 import org.geowebcache.grid.GridSubsetFactory;
 import org.geowebcache.storage.blobstore.file.FilePathUtils;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
 
-public class PagePyramidTest extends TestCase {
+public class PagePyramidTest {
+
+    static final Log LOG = LogFactory.getLog(PagePyramidTest.class);
 
     GridSet world_EPSG3857 =
             new GridSetBroker(Collections.singletonList(new DefaultGridsets(true, false)))
@@ -44,6 +52,7 @@ public class PagePyramidTest extends TestCase {
 
     private PagePyramid pyramid;
 
+    @Before
     public void setUp() {
         coverages =
                 new long[][] { //
@@ -55,6 +64,7 @@ public class PagePyramidTest extends TestCase {
         pyramid = new PagePyramid(coverages, 0, 3);
     }
 
+    @Test
     public void testCalculatePageInfo() {
         GridSubset gridSubSet = GridSubsetFactory.createGridSubSet(world_EPSG3857);
         long[][] gridSubsetCoverages = gridSubSet.getCoverages();
@@ -81,7 +91,7 @@ public class PagePyramidTest extends TestCase {
             totalPages += levelPages;
             totalTiles = totalTiles.add(tilesPerPage.multiply(BigInteger.valueOf(levelPages)));
 
-            System.out.println(
+            LOG.info(
                     FilePathUtils.zeroPadder(z, 2)
                             + ": (total pages ="
                             + nf.format(totalPages)
@@ -91,43 +101,44 @@ public class PagePyramidTest extends TestCase {
                             + nf.format(tilesPerPage.multiply(BigInteger.valueOf(levelPages)))
                             + ") ");
         }
-        System.out.println("Total pages: " + totalPages);
+        LOG.info("Total pages: " + totalPages);
     }
 
+    @Test
     public void testGetPagesPerLevel() {
-        assertEquals(2, pyramid.getPagesPerLevelX(0));
-        assertEquals(2, pyramid.getPagesPerLevelY(0));
+        Assert.assertEquals(2, pyramid.getPagesPerLevelX(0));
+        Assert.assertEquals(2, pyramid.getPagesPerLevelY(0));
 
-        assertEquals(8, pyramid.getPagesPerLevelX(1));
-        assertEquals(8, pyramid.getPagesPerLevelY(1));
+        Assert.assertEquals(8, pyramid.getPagesPerLevelX(1));
+        Assert.assertEquals(8, pyramid.getPagesPerLevelY(1));
 
-        assertEquals(34, pyramid.getPagesPerLevelX(2));
-        assertEquals(34, pyramid.getPagesPerLevelY(2));
+        Assert.assertEquals(34, pyramid.getPagesPerLevelX(2));
+        Assert.assertEquals(34, pyramid.getPagesPerLevelY(2));
 
-        assertEquals(77, pyramid.getPagesPerLevelX(3));
-        assertEquals(77, pyramid.getPagesPerLevelY(3));
+        Assert.assertEquals(77, pyramid.getPagesPerLevelX(3));
+        Assert.assertEquals(77, pyramid.getPagesPerLevelY(3));
     }
 
+    @Test
     public void testGetTilesPerPage() {
-        assertEquals(1, pyramid.getTilesPerPageX(0));
-        assertEquals(1, pyramid.getTilesPerPageY(0));
+        Assert.assertEquals(1, pyramid.getTilesPerPageX(0));
+        Assert.assertEquals(1, pyramid.getTilesPerPageY(0));
 
-        assertEquals(1, pyramid.getTilesPerPageX(1));
-        assertEquals(1, pyramid.getTilesPerPageY(1));
+        Assert.assertEquals(1, pyramid.getTilesPerPageX(1));
+        Assert.assertEquals(1, pyramid.getTilesPerPageY(1));
 
-        assertEquals(3, pyramid.getTilesPerPageX(2));
-        assertEquals(3, pyramid.getTilesPerPageY(2));
+        Assert.assertEquals(3, pyramid.getTilesPerPageX(2));
+        Assert.assertEquals(3, pyramid.getTilesPerPageY(2));
 
-        assertEquals(26, pyramid.getTilesPerPageX(3));
-        assertEquals(26, pyramid.getTilesPerPageY(3));
+        Assert.assertEquals(26, pyramid.getTilesPerPageX(3));
+        Assert.assertEquals(26, pyramid.getTilesPerPageY(3));
     }
 
+    @Test
     public void testToGridCoverage() {
 
-        long[][] gridCoverage;
-
-        gridCoverage = pyramid.toGridCoverage(0, 0, 0);
-        assertEquals(asList(0, 0, 0, 0, 0), asList(gridCoverage[0]));
+        long[][] gridCoverage = pyramid.toGridCoverage(0, 0, 0);
+        Assert.assertEquals(asList(0, 0, 0, 0, 0), asList(gridCoverage[0]));
 
         int level = 1;
 
@@ -144,21 +155,22 @@ public class PagePyramidTest extends TestCase {
             coverages[level][0] + tilesPerPageY * pageY + tilesPerPageY - 1, //
             pageZ
         };
-        assertEquals(asList(expected), asList(gridCoverage[1]));
+        Assert.assertEquals(asList(expected), asList(gridCoverage[1]));
     }
 
+    @Test
     public void testPageIndexForTile() throws Exception {
         try {
             pyramid.pageIndexForTile(0, 0, 0, null);
-            fail("Expected IAE");
+            Assert.fail("Expected IAE");
         } catch (IllegalArgumentException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
         try {
             pyramid.pageIndexForTile(0, 0, 0, new int[2]);
-            fail("Expected IAE");
+            Assert.fail("Expected IAE");
         } catch (IllegalArgumentException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
 
         printPyramid(pyramid.getZoomStart(), pyramid.getZoomStop(), pyramid);
@@ -168,39 +180,39 @@ public class PagePyramidTest extends TestCase {
         int[] pageIndexTarget = {Integer.MIN_VALUE, Integer.MIN_VALUE, Integer.MIN_VALUE};
         int[] expected = {0, 0, 0};
         pyramid.pageIndexForTile(0, 0, 0, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         expected = new int[] {1, 1, 0};
         pyramid.pageIndexForTile(1, 1, 0, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         // grid coverages:
         // { 3, 3, 10, 10, 1 },// 1x1 tiles
         expected = new int[] {0, 0, 1};
         pyramid.pageIndexForTile(3, 3, 1, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         expected = new int[] {1, 1, 1};
         pyramid.pageIndexForTile(4, 4, 1, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         expected = new int[] {7, 7, 1};
         pyramid.pageIndexForTile(10, 10, 1, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         // grid coverages:
         // { 1000, 1000, 3000, 3000, 3 } // 77x77 pages, 26x26 tiles
         expected = new int[] {0, 0, 3};
         pyramid.pageIndexForTile(1000, 1000, 3, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
 
         expected = new int[] {1, 1, 3};
         pyramid.pageIndexForTile(1026, 1026, 3, pageIndexTarget);
-        assertTrue(Arrays.toString(pageIndexTarget), Arrays.equals(expected, pageIndexTarget));
+        assertArrayEquals(Arrays.toString(pageIndexTarget), expected, pageIndexTarget);
     }
 
     private List<Long> asList(long... coverage) {
-        List<Long> list = new ArrayList<Long>();
+        List<Long> list = new ArrayList<>();
         for (long l : coverage) {
             list.add(Long.valueOf(l));
         }

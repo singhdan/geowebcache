@@ -54,7 +54,7 @@ class CacheCleanerTask implements Runnable {
     public CacheCleanerTask(final DiskQuotaMonitor monitor, final ExecutorService executor) {
         this.monitor = monitor;
         this.cleanUpExecutorService = executor;
-        this.perLayerRunningCleanUps = new HashMap<String, Future<?>>();
+        this.perLayerRunningCleanUps = new HashMap<>();
     }
 
     /**
@@ -94,7 +94,7 @@ class CacheCleanerTask implements Runnable {
 
         final Set<String> allLayerNames = monitor.getLayerNames();
         final Set<String> configuredLayerNames = quotaConfig.layerNames();
-        final Set<String> globallyManagedLayerNames = new HashSet<String>(allLayerNames);
+        final Set<String> globallyManagedLayerNames = new HashSet<>(allLayerNames);
 
         globallyManagedLayerNames.removeAll(configuredLayerNames);
 
@@ -143,17 +143,16 @@ class CacheCleanerTask implements Runnable {
                 }
 
                 Set<String> layerNames = Collections.singleton(layerName);
-                QuotaResolver quotaResolver;
-                quotaResolver = monitor.newLayerQuotaResolver(layerName);
+                QuotaResolver quotaResolver = monitor.newLayerQuotaResolver(layerName);
 
-                LayerQuotaEnforcementTask task;
-                task = new LayerQuotaEnforcementTask(layerNames, quotaResolver, monitor);
+                LayerQuotaEnforcementTask task =
+                        new LayerQuotaEnforcementTask(layerNames, quotaResolver, monitor);
                 Future<Object> future = this.cleanUpExecutorService.submit(task);
                 perLayerRunningCleanUps.put(layerName, future);
             }
         }
 
-        if (globallyManagedLayerNames.size() > 0) {
+        if (!globallyManagedLayerNames.isEmpty()) {
             ExpirationPolicy globalExpirationPolicy = quotaConfig.getGlobalExpirationPolicyName();
             if (globalExpirationPolicy == null) {
                 return;
@@ -179,9 +178,8 @@ class CacheCleanerTask implements Runnable {
             if (excedent.getBytes().compareTo(BigInteger.ZERO) > 0) {
 
                 log.debug("Submitting global cache quota enforcement task");
-                LayerQuotaEnforcementTask task;
                 QuotaResolver quotaResolver = monitor.newGlobalQuotaResolver();
-                task =
+                LayerQuotaEnforcementTask task =
                         new LayerQuotaEnforcementTask(
                                 globallyManagedLayerNames, quotaResolver, monitor);
                 this.globalCleanUpTask = this.cleanUpExecutorService.submit(task);

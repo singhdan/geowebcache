@@ -27,10 +27,12 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class S3BlobStoreConfigProviderTest {
 
     @Before
+    @SuppressWarnings("PMD.CloseResource")
     public void setUp() throws Exception {
         System.setProperty("BUCKET", "MYBUCKET");
         System.setProperty("CONNECTIONS", "30");
         System.setProperty("ENABLED", "true");
+        System.setProperty("REGION", "us-east-1");
         System.setProperty("ALLOW_ENV_PARAMETRIZATION", "true");
         ClassPathXmlApplicationContext context =
                 new ClassPathXmlApplicationContext("appContextTestS3.xml");
@@ -44,6 +46,7 @@ public class S3BlobStoreConfigProviderTest {
         System.clearProperty("BUCKET");
         System.clearProperty("CONNECTIONS");
         System.clearProperty("ENABLED");
+        System.clearProperty("REGION");
         System.clearProperty("ALLOW_ENV_PARAMETRIZATION");
     }
 
@@ -56,7 +59,8 @@ public class S3BlobStoreConfigProviderTest {
         assertTrue(config instanceof S3BlobStoreInfo);
         S3BlobStoreInfo s3Config = (S3BlobStoreInfo) config;
         assertEquals("MYBUCKET", s3Config.getBucket());
+        assertEquals("https://s3.us-east-1.amazonaws.com", s3Config.getEndpoint());
         assertEquals(30, s3Config.getMaxConnections().intValue());
-        assertEquals(true, s3Config.isEnabled());
+        assertTrue(s3Config.isEnabled());
     }
 }

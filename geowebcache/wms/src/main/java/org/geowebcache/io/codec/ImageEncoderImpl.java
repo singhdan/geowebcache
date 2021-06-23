@@ -264,7 +264,7 @@ public class ImageEncoderImpl implements ImageEncoder {
             // Creation of the associated Writer
             ImageWriter writer = null;
             ImageOutputStream stream = null;
-            try {
+            try { // NOPMD (complex instantiation of the image stream
                 writer = newSpi.createWriterInstance();
                 // Check if the input object is an OutputStream
                 if (destination instanceof OutputStream) {
@@ -345,7 +345,7 @@ public class ImageEncoderImpl implements ImageEncoder {
             Map<String, String> inputParams,
             ImageIOInitializer initializer) {
         this.isAggressiveOutputStreamSupported = aggressiveOutputStreamOptimization;
-        this.supportedMimeTypes = new ArrayList<String>(supportedMimeTypes);
+        this.supportedMimeTypes = new ArrayList<>(supportedMimeTypes);
         this.inputParams = inputParams;
         // Get the IIORegistry if needed
         IIORegistry theRegistry = initializer.getRegistry();

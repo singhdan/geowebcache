@@ -14,7 +14,12 @@
  */
 package org.geowebcache.config.wms;
 
-import static org.easymock.EasyMock.*;
+import static org.easymock.EasyMock.capture;
+import static org.easymock.EasyMock.createNiceMock;
+import static org.easymock.EasyMock.expect;
+import static org.easymock.EasyMock.expectLastCall;
+import static org.easymock.EasyMock.replay;
+import static org.easymock.EasyMock.verify;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.beans.HasPropertyWithValue.hasProperty;
@@ -31,7 +36,12 @@ import java.util.List;
 import org.easymock.Capture;
 import org.easymock.CaptureType;
 import org.geotools.data.ows.OperationType;
-import org.geotools.ows.wms.*;
+import org.geotools.ows.wms.CRSEnvelope;
+import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.StyleImpl;
+import org.geotools.ows.wms.WMSCapabilities;
+import org.geotools.ows.wms.WMSRequest;
+import org.geotools.ows.wms.WebMapServer;
 import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.config.DefaultingConfiguration;
 import org.geowebcache.filter.parameters.ParameterFilter;
@@ -59,7 +69,7 @@ public class GetCapabilitiesConfigurationTest {
         req = createNiceMock(WMSRequest.class);
         gcOpType = createNiceMock(OperationType.class);
         globalConfig = createNiceMock(DefaultingConfiguration.class);
-        layerCapture = new Capture<TileLayer>(CaptureType.LAST);
+        layerCapture = new Capture<>(CaptureType.LAST);
         broker = new GridSetBroker(Collections.singletonList(new DefaultGridsets(false, false)));
 
         expect(server.getCapabilities()).andStubReturn(cap);
@@ -77,7 +87,7 @@ public class GetCapabilitiesConfigurationTest {
         Layer l = new Layer();
         l.setName("Foo");
         l.setLatLonBoundingBox(new CRSEnvelope());
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
         layers.add(l);
         expect(cap.getLayerList()).andReturn(layers);
 
@@ -109,13 +119,19 @@ public class GetCapabilitiesConfigurationTest {
         Layer l = new Layer();
         l.setName("Foo");
         l.setLatLonBoundingBox(new CRSEnvelope());
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
         layers.add(l);
         expect(cap.getLayerList()).andReturn(layers);
 
         GetCapabilitiesConfiguration config =
                 new GetCapabilitiesConfiguration(
-                        broker, "http://test/wms", "image/png", "3x3", "", new HashMap(), "false") {
+                        broker,
+                        "http://test/wms",
+                        "image/png",
+                        "3x3",
+                        "",
+                        new HashMap<>(),
+                        "false") {
 
                     @Override
                     WebMapServer getWMS() {
@@ -140,11 +156,11 @@ public class GetCapabilitiesConfigurationTest {
         Layer l = new Layer();
         l.setName("Foo");
         l.setLatLonBoundingBox(new CRSEnvelope());
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
         layers.add(l);
         expect(cap.getLayerList()).andReturn(layers);
 
-        HashMap<String, String> cachedParams = new HashMap<String, String>();
+        HashMap<String, String> cachedParams = new HashMap<>();
         cachedParams.put("", "");
 
         GetCapabilitiesConfiguration config =
@@ -170,6 +186,7 @@ public class GetCapabilitiesConfigurationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked") // to be removed once we upgrade to Hamcrest 2, @SafeVarArgs
     public void testDelegateInitializingLayers() throws Exception {
         GridSetBroker broker =
                 new GridSetBroker(Collections.singletonList(new DefaultGridsets(false, false)));
@@ -177,7 +194,7 @@ public class GetCapabilitiesConfigurationTest {
         String mimeTypes = "image/png";
         String vendorParameters = "map=/osgeo/mapserver/msautotest/world/world.map";
 
-        HashMap<String, String> cachedParams = new HashMap<String, String>();
+        HashMap<String, String> cachedParams = new HashMap<>();
 
         cachedParams.put("angle", "");
         cachedParams.put("CQL_FILTER", "1=1");
@@ -202,7 +219,7 @@ public class GetCapabilitiesConfigurationTest {
 
         expect(cap.getVersion()).andStubReturn("1.1.1");
 
-        List<Layer> layers = new LinkedList<Layer>();
+        List<Layer> layers = new LinkedList<>();
 
         Layer l = new Layer();
         l.setName("Foo");

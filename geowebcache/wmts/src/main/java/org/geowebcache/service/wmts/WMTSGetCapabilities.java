@@ -45,10 +45,12 @@ import org.geowebcache.grid.GridSetBroker;
 import org.geowebcache.grid.GridSubset;
 import org.geowebcache.grid.SRS;
 import org.geowebcache.io.XMLBuilder;
+import org.geowebcache.layer.TileJSONProvider;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.TileLayerDispatcher;
 import org.geowebcache.layer.meta.LayerMetaInformation;
 import org.geowebcache.layer.meta.MetadataURL;
+import org.geowebcache.mime.ApplicationMime;
 import org.geowebcache.stats.RuntimeStats;
 import org.geowebcache.util.ServletUtils;
 import org.geowebcache.util.URLMangler;
@@ -721,11 +723,9 @@ public class WMTSGetCapabilities {
     private void layerResourceUrls(
             XMLBuilder xml, TileLayer layer, List<ParameterFilter> filters, String baseurl)
             throws IOException {
+        String baseTemplate = baseurl + "/" + layer.getName();
         String commonTemplate =
-                baseurl
-                        + "/"
-                        + layer.getName()
-                        + "/{style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}";
+                baseTemplate + "/{style}/{TileMatrixSet}/{TileMatrix}/{TileRow}/{TileCol}";
         String commonDimensions = "";
         // Extracts layer dimension
         List<ParameterFilter> layerDimensions = WMTSUtils.getLayerDimensions(filters);
@@ -748,6 +748,22 @@ public class WMTSGetCapabilities {
         for (String format : infoFormats) {
             String template = commonTemplate + "/{J}/{I}?format=" + format + commonDimensions;
             layerResourceUrlsGen(xml, format, "FeatureInfo", template);
+        }
+        if (layer instanceof TileJSONProvider) {
+            List<String> formatExtensions = WMTSUtils.getLayerFormatsExtensions(layer);
+            TileJSONProvider provider = (TileJSONProvider) layer;
+            String outputFormat = ApplicationMime.json.getFormat();
+            if (provider.supportsTileJSON()) {
+                for (String tileJsonFormat : formatExtensions) {
+                    String template =
+                            baseTemplate
+                                    + "/{style}/tilejson/"
+                                    + tileJsonFormat
+                                    + "?format="
+                                    + outputFormat;
+                    layerResourceUrlsGen(xml, outputFormat, "TileJSON", template);
+                }
+            }
         }
     }
 

@@ -18,11 +18,14 @@ import static org.custommonkey.xmlunit.XMLAssert.assertXpathEvaluatesTo;
 import static org.custommonkey.xmlunit.XMLAssert.assertXpathExists;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.eq;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.withSettings;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,11 +36,12 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.io.FileUtils;
 import org.custommonkey.xmlunit.SimpleNamespaceContext;
 import org.custommonkey.xmlunit.XMLUnit;
-import org.custommonkey.xmlunit.XpathEngine;
+import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.config.ServerConfiguration;
 import org.geowebcache.config.XMLGridSubset;
@@ -54,8 +58,12 @@ import org.geowebcache.grid.GridSubset;
 import org.geowebcache.grid.SRS;
 import org.geowebcache.io.ByteArrayResource;
 import org.geowebcache.io.Resource;
+import org.geowebcache.layer.TileJSONProvider;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.TileLayerDispatcher;
+import org.geowebcache.layer.meta.TileJSON;
+import org.geowebcache.layer.meta.VectorLayerMetadata;
+import org.geowebcache.mime.ApplicationMime;
 import org.geowebcache.mime.MimeType;
 import org.geowebcache.service.OWSException;
 import org.geowebcache.stats.RuntimeStats;
@@ -64,7 +72,6 @@ import org.geowebcache.util.ResponseUtils;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -72,9 +79,6 @@ import org.springframework.mock.web.MockHttpServletResponse;
 import org.w3c.dom.Document;
 
 public class WMTSRestTest {
-
-    // private static Map<String, String> namespaces = new HashMap<String, String>(0);
-    private static XpathEngine xpath;
 
     GridSetBroker broker =
             new GridSetBroker(Collections.singletonList(new DefaultGridsets(true, true)));
@@ -103,7 +107,6 @@ public class WMTSRestTest {
         namespaces.put("ows", "http://www.opengis.net/ows/1.1");
         namespaces.put("wmts", "http://www.opengis.net/wmts/1.0");
         XMLUnit.setXpathNamespaceContext(new SimpleNamespaceContext(namespaces));
-        xpath = XMLUnit.newXpathEngine();
     }
 
     @Test
@@ -159,12 +162,97 @@ public class WMTSRestTest {
         assertArrayEquals(getSampleTileContent().getContents(), resp.getContentAsByteArray());
     }
 
+    @Test
+    public void testGetTileJSONWithStyle() throws Exception {
+        addTileLayerJsonMock("image/png");
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setPathInfo("geowebcache/service/wmts/rest/mockLayerTileJSON/style-a/tilejson/png");
+        req.addParameter("format", "application/json");
+        MockHttpServletResponse resp = dispatch(req);
+
+        assertEquals(200, resp.getStatus());
+        String content = resp.getContentAsString();
+
+        // Checking the response contains a tileUrl with the style
+        assertTrue(
+                content.contains(
+                        "\"tiles\":[\"http://localhost/service/wmts/rest/mockLayerTileJSON/style-a/EPSG:900913/EPSG:900913:{z}/{y}/{x}?format=image/png\"]"));
+        assertFalse(content.contains("vector_layers"));
+    }
+
+    @Test
+    public void testGetTileJSONWithoutStyle() throws Exception {
+        String mvt = ApplicationMime.mapboxVector.getFormat();
+        addTileLayerJsonMock(mvt);
+
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.setPathInfo("geowebcache/service/wmts/rest/mockLayerTileJSON/tilejson/pbf");
+        req.addParameter("format", ApplicationMime.json.getFormat());
+        MockHttpServletResponse resp = dispatch(req);
+
+        assertEquals(200, resp.getStatus());
+        String content = resp.getContentAsString();
+
+        // Checking the response contains a tileUrl without the style
+        assertTrue(
+                content.contains(
+                        "\"tiles\":[\"http://localhost/service/wmts/rest/mockLayerTileJSON/EPSG:900913/EPSG:900913:{z}/{y}/{x}?format="
+                                + mvt
+                                + "\"]"));
+        assertTrue(content.contains("vector_layers"));
+    }
+
+    private void addTileLayerJsonMock(String mimeType) throws GeoWebCacheException {
+
+        final MimeType mimeType1 = MimeType.createFromFormat(mimeType);
+        String layerNameJson = "mockLayerTileJSON";
+        TileLayer tileLayerJson =
+                mock(TileLayer.class, withSettings().extraInterfaces(TileJSONProvider.class));
+        when(tileLayerDispatcher.getTileLayer(eq(layerNameJson))).thenReturn(tileLayerJson);
+        when(tileLayerJson.getName()).thenReturn(layerNameJson);
+        when(tileLayerJson.isEnabled()).thenReturn(true);
+        when(tileLayerJson.isAdvertised()).thenReturn(true);
+        when(tileLayerJson.getMimeTypes()).thenReturn(Arrays.asList(mimeType1));
+        TileJSONProvider tileJSONProvider = (TileJSONProvider) tileLayerJson;
+        when(tileJSONProvider.supportsTileJSON()).thenReturn(true);
+        TileJSON json = new TileJSON();
+        VectorLayerMetadata metadata = new VectorLayerMetadata();
+        metadata.setFields(Collections.singletonMap("FIELD", "TYPE"));
+        json.setLayers(Collections.singletonList(metadata));
+        when(tileJSONProvider.getTileJSON()).thenReturn(json);
+
+        String googleMercator = "EPSG:900913";
+        when(tileLayerJson.getGridSubsets()).thenReturn(Collections.singleton(googleMercator));
+        GridSubset subset = mock(GridSubset.class);
+        when(subset.getGridNames()).thenReturn(new String[] {googleMercator + ":1"});
+        when(tileLayerJson.getGridSubset(eq(googleMercator))).thenReturn(subset);
+
+        when(tileLayerDispatcher.getLayerList()).thenReturn(Arrays.asList(tileLayerJson));
+    }
+
     public MockHttpServletResponse dispatch(MockHttpServletRequest req) throws Exception {
         MockHttpServletResponse resp = new MockHttpServletResponse();
         try {
             final Conveyor conveyor = wmtsService.getConveyor(req, resp);
 
             if (conveyor.reqHandler == Conveyor.RequestHandler.SERVICE) {
+                final String layerName = conveyor.getLayerId();
+
+                final TileLayer layer;
+                if (Objects.nonNull(layerName)) {
+                    layer = tileLayerDispatcher.getTileLayer(layerName);
+                    if (layer != null && !layer.isEnabled()) {
+                        throw new OWSException(
+                                400,
+                                "InvalidParameterValue",
+                                "LAYERS",
+                                "Layer '" + layerName + "' is disabled");
+                    }
+                    if (conveyor instanceof ConveyorTile) {
+                        ((ConveyorTile) conveyor).setTileLayer(layer);
+                    }
+                }
                 wmtsService.handleRequest(conveyor);
             } else {
                 ResponseUtils.writeTile(
@@ -342,8 +430,8 @@ public class WMTSRestTest {
         final MimeType infoMimeType3 = MimeType.createFromFormat("application/vnd.ogc.gml");
         when(tileLayer.getInfoMimeTypes())
                 .thenReturn(Arrays.asList(infoMimeType1, infoMimeType2, infoMimeType3));
-        Map<String, GridSubset> subsets = new HashMap<String, GridSubset>();
-        Map<SRS, List<GridSubset>> bySrs = new HashMap<SRS, List<GridSubset>>();
+        Map<String, GridSubset> subsets = new HashMap<>();
+        Map<SRS, List<GridSubset>> bySrs = new HashMap<>();
 
         for (String gsetName : gridSetNames) {
             GridSet gridSet = broker.get(gsetName);
@@ -355,7 +443,7 @@ public class WMTSRestTest {
 
             List<GridSubset> list = bySrs.get(gridSet.getSrs());
             if (list == null) {
-                list = new ArrayList<GridSubset>();
+                list = new ArrayList<>();
                 bySrs.put(gridSet.getSrs(), list);
             }
             list.add(gridSubSet);
@@ -373,16 +461,13 @@ public class WMTSRestTest {
 
         when(tileLayer.getTile(any(ConveyorTile.class)))
                 .thenAnswer(
-                        new Answer<ConveyorTile>() {
-                            @Override
-                            public ConveyorTile answer(InvocationOnMock invocation)
-                                    throws Throwable {
-                                ConveyorTile sourceTile =
-                                        (ConveyorTile) invocation.getArguments()[0];
-                                sourceTile.setBlob(getSampleTileContent());
-                                return sourceTile;
-                            }
-                        });
+                        (Answer<ConveyorTile>)
+                                invocation -> {
+                                    ConveyorTile sourceTile =
+                                            (ConveyorTile) invocation.getArguments()[0];
+                                    sourceTile.setBlob(getSampleTileContent());
+                                    return sourceTile;
+                                });
 
         when(tileLayer.getFeatureInfo(
                         any(ConveyorTile.class),
@@ -391,13 +476,7 @@ public class WMTSRestTest {
                         anyInt(),
                         anyInt(),
                         anyInt()))
-                .thenAnswer(
-                        new Answer<Resource>() {
-                            @Override
-                            public Resource answer(InvocationOnMock invocation) throws Throwable {
-                                return new ByteArrayResource(new byte[0]);
-                            }
-                        });
+                .thenAnswer((Answer<Resource>) invocation -> new ByteArrayResource(new byte[0]));
 
         return tld;
     }

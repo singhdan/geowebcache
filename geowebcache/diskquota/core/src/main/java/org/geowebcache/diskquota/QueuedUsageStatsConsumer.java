@@ -67,7 +67,7 @@ public class QueuedUsageStatsConsumer implements Callable<Long> {
         private int numAggregations;
 
         public TimedUsageUpdate() {
-            this.pages = new HashMap<String, PageStatsPayload>();
+            this.pages = new HashMap<>();
             this.lastCommitTime = System.currentTimeMillis();
             numAggregations = 0;
         }
@@ -109,14 +109,14 @@ public class QueuedUsageStatsConsumer implements Callable<Long> {
                 /*
                  * do not wait for more than 5 seconds for data to become available on the queue
                  */
-                UsageStats requestedTile;
-                requestedTile = usageStatsQueue.poll(DEFAULT_SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
+                UsageStats requestedTile =
+                        usageStatsQueue.poll(DEFAULT_SYNC_TIMEOUT, TimeUnit.MILLISECONDS);
                 if (requestedTile == null) {
                     /*
                      * poll timed out, nothing new, check there are no pending aggregated updates
                      * for too long if we're idle
                      */
-                    if (aggregatedPendingUpdates.pages.size() > 0) {
+                    if (!aggregatedPendingUpdates.pages.isEmpty()) {
                         commit();
                     }
 
@@ -220,8 +220,8 @@ public class QueuedUsageStatsConsumer implements Callable<Long> {
     }
 
     private void commit() {
-        Collection<PageStatsPayload> pendingCommits;
-        pendingCommits = new ArrayList<PageStatsPayload>(aggregatedPendingUpdates.pages.values());
+        Collection<PageStatsPayload> pendingCommits =
+                new ArrayList<>(aggregatedPendingUpdates.pages.values());
         quotaStore.addHitsAndSetAccesTime(pendingCommits);
         aggregatedPendingUpdates.lastCommitTime = System.currentTimeMillis();
         aggregatedPendingUpdates.numAggregations = 0;

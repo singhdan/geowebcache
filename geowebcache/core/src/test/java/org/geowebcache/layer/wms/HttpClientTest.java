@@ -15,21 +15,25 @@
 package org.geowebcache.layer.wms;
 
 import java.net.URL;
-import junit.framework.TestCase;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.UsernamePasswordCredentials;
 import org.apache.commons.httpclient.auth.AuthScope;
 import org.apache.commons.httpclient.methods.GetMethod;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.junit.Before;
+import org.junit.Test;
 
-public class HttpClientTest extends TestCase {
+public class HttpClientTest {
+
+    static final Log LOG = LogFactory.getLog(HttpClientTest.class);
 
     static final boolean RUN_PERFORMANCE_TEST = false;
 
     static final int LOOP_COUNT = 100000;
 
-    protected void setUp() throws Exception {
-        super.setUp();
-    }
+    @Before
+    public void setUp() throws Exception {}
 
     /**
      * Some numbers just for creating HttpClient instances (less than what is done below)
@@ -37,6 +41,7 @@ public class HttpClientTest extends TestCase {
      * <p>Core i7 , Java 1.6 values: 1 000 000 in 559 ms 1 00 000 in 267 ms 10 000 in 186 ms 1 000
      * in 134 ms
      */
+    @Test
     public void testHttpClientConstruction() throws Exception {
         if (RUN_PERFORMANCE_TEST) {
             long start = System.currentTimeMillis();
@@ -53,17 +58,12 @@ public class HttpClientTest extends TestCase {
                 hc.getState().setCredentials(authscope, credentials);
                 getMethod.setDoAuthentication(true);
                 hc.getParams().setAuthenticationPreemptive(true);
-
-                if (hc.getHostConfiguration().getPort() == 0) {
-                    // Dummy
-                }
-                // System.out.print(i);
             }
             long stop = System.currentTimeMillis();
 
             long diff = (stop - start);
 
-            System.out.println("Time to create " + LOOP_COUNT + " in " + diff + " milliseconds");
+            LOG.info("Time to create " + LOOP_COUNT + " in " + diff + " milliseconds");
         }
     }
 }

@@ -17,16 +17,31 @@ package org.geowebcache.config.wms;
 import com.google.common.collect.Sets;
 import java.io.IOException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Optional;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.geotools.data.ows.SimpleHttpClient;
+import org.geotools.http.HTTPClientFinder;
 import org.geotools.ows.ServiceException;
-import org.geotools.ows.wms.*;
+import org.geotools.ows.wms.CRSEnvelope;
+import org.geotools.ows.wms.Layer;
+import org.geotools.ows.wms.StyleImpl;
+import org.geotools.ows.wms.WMSCapabilities;
+import org.geotools.ows.wms.WebMapServer;
 import org.geotools.ows.wms.xml.Dimension;
 import org.geotools.ows.wms.xml.Extent;
 import org.geotools.util.PreventLocalEntityResolver;
@@ -42,7 +57,13 @@ import org.geowebcache.config.wms.parameters.NaiveWMSDimensionFilter;
 import org.geowebcache.filter.parameters.ParameterFilter;
 import org.geowebcache.filter.parameters.RegexParameterFilter;
 import org.geowebcache.filter.parameters.StringParameterFilter;
-import org.geowebcache.grid.*;
+import org.geowebcache.grid.BoundingBox;
+import org.geowebcache.grid.GridSet;
+import org.geowebcache.grid.GridSetBroker;
+import org.geowebcache.grid.GridSetFactory;
+import org.geowebcache.grid.GridSubset;
+import org.geowebcache.grid.GridSubsetFactory;
+import org.geowebcache.grid.SRS;
 import org.geowebcache.layer.TileLayer;
 import org.geowebcache.layer.meta.LayerMetaInformation;
 import org.geowebcache.layer.meta.MetadataURL;
@@ -96,7 +117,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
         this.url = url;
         this.mimeTypes = mimeTypes;
         this.metaTiling = metaTiling;
-        this.layers = new HashMap<String, TileLayer>();
+        this.layers = new HashMap<>();
         if (Boolean.parseBoolean(allowCacheBypass)) {
             this.allowCacheBypass = true;
         }
@@ -115,7 +136,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
         this.mimeTypes = mimeTypes;
         this.metaTiling = metaTiling;
         this.vendorParameters = vendorParameters;
-        this.layers = new HashMap<String, TileLayer>();
+        this.layers = new HashMap<>();
         if (Boolean.parseBoolean(allowCacheBypass)) {
             this.allowCacheBypass = true;
         }
@@ -154,7 +175,6 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
      * @return the layers described at the given URL
      */
     private synchronized List<TileLayer> getTileLayers(boolean reload) throws GeoWebCacheException {
-        final List<TileLayer> layers;
 
         final WebMapServer wms;
 
@@ -173,9 +193,9 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
 
         String urlVersion = parseVersion(url);
 
-        layers = getLayers(wms, wmsUrl, urlVersion);
+        final List<TileLayer> layers = getLayers(wms, wmsUrl, urlVersion);
 
-        if (layers == null || layers.size() < 1) {
+        if (layers == null || layers.isEmpty()) {
             log.error("Unable to find any layers based on " + url);
         } else {
             log.info("Loaded " + layers.size() + " layers from " + url);
@@ -204,7 +224,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
 
     private List<TileLayer> getLayers(WebMapServer wms, String wmsUrl, String urlVersion)
             throws GeoWebCacheException {
-        List<TileLayer> layers = new LinkedList<TileLayer>();
+        List<TileLayer> layers = new LinkedList<>();
 
         WMSCapabilities capabilities = wms.getCapabilities();
         if (capabilities == null) {
@@ -233,7 +253,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
 
             if (name != null) {
 
-                LinkedList<ParameterFilter> paramFilters = new LinkedList<ParameterFilter>();
+                LinkedList<ParameterFilter> paramFilters = new LinkedList<>();
                 List<StyleImpl> styles = layer.getStyles();
 
                 StringBuffer buf = new StringBuffer();
@@ -332,7 +352,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
                     List<org.geotools.ows.wms.xml.MetadataURL> metadataURLs =
                             layer.getMetadataURL();
                     if (metadataURLs != null && !metadataURLs.isEmpty()) {
-                        List<MetadataURL> convertedMetadataURLs = new ArrayList<MetadataURL>();
+                        List<MetadataURL> convertedMetadataURLs = new ArrayList<>();
                         for (org.geotools.ows.wms.xml.MetadataURL metadataURL : metadataURLs) {
                             convertedMetadataURLs.add(
                                     new MetadataURL(
@@ -409,7 +429,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
             List<ParameterFilter> paramFilters)
             throws GeoWebCacheException {
 
-        Hashtable<String, GridSubset> grids = new Hashtable<String, GridSubset>(2);
+        Map<String, GridSubset> grids = new HashMap<>(2);
         grids.put(
                 gridSetBroker.getWorldEpsg4326().getName(),
                 GridSubsetFactory.createGridSubSet(
@@ -419,7 +439,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
                 GridSubsetFactory.createGridSubSet(
                         gridSetBroker.getWorldEpsg3857(), bounds3785, 0, 30));
 
-        if (additionalBounds != null && additionalBounds.size() > 0) {
+        if (additionalBounds != null && !additionalBounds.isEmpty()) {
             Iterator<CRSEnvelope> iter = additionalBounds.values().iterator();
             while (iter.hasNext()) {
                 CRSEnvelope env = iter.next();
@@ -460,14 +480,14 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
         List<String> mimeFormats = null;
         if (this.mimeTypes != null) {
             String[] mimeFormatArray = this.mimeTypes.split(",");
-            mimeFormats = new ArrayList<String>(mimeFormatArray.length);
+            mimeFormats = new ArrayList<>(mimeFormatArray.length);
 
             // This is stupid... but oh well, we're only doing it once
-            for (int i = 0; i < mimeFormatArray.length; i++) {
-                mimeFormats.add(mimeFormatArray[i]);
+            for (String s : mimeFormatArray) {
+                mimeFormats.add(s);
             }
         } else {
-            mimeFormats = new ArrayList<String>(3);
+            mimeFormats = new ArrayList<>(3);
             mimeFormats.add("image/png");
             mimeFormats.add("image/png8");
             mimeFormats.add("image/jpeg");
@@ -496,7 +516,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
     WebMapServer getWMS() throws IOException, ServiceException {
         Map<String, Object> hints = new HashMap<>();
         hints.put(XMLHandlerHints.ENTITY_RESOLVER, PreventLocalEntityResolver.INSTANCE);
-        return new WebMapServer(new URL(url), new SimpleHttpClient(), hints);
+        return new WebMapServer(new URL(url), HTTPClientFinder.createClient(), hints);
     }
 
     private String parseVersion(String url) {
@@ -565,7 +585,7 @@ public class GetCapabilitiesConfiguration implements TileLayerConfiguration, Gri
 
     /** @see TileLayerConfiguration#getLayerNames() */
     public Set<String> getLayerNames() {
-        return new HashSet<String>(layers.keySet());
+        return new HashSet<>(layers.keySet());
     }
 
     /** @see TileLayerConfiguration#containsLayer(java.lang.String) */

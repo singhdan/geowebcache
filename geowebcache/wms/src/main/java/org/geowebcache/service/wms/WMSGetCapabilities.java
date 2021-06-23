@@ -81,7 +81,7 @@ public class WMSGetCapabilities {
                 ServletUtils.selectedStringsFromMap(
                         servReq.getParameterMap(), servReq.getCharacterEncoding(), tiledKey);
 
-        if (tiledValue != null && tiledValue.size() > 0) {
+        if (tiledValue != null && !tiledValue.isEmpty()) {
             includeVendorSpecific = Boolean.parseBoolean(tiledValue.get("TILED"));
         }
     }
@@ -281,7 +281,7 @@ public class WMSGetCapabilities {
         // Find all the formats we support
         Iterable<TileLayer> layerIter = tld.getLayerList();
 
-        HashSet<String> formats = new HashSet<String>();
+        HashSet<String> formats = new HashSet<>();
 
         for (TileLayer layer : layerIter) {
             if (!layer.isEnabled() || !layer.isAdvertised()) {
@@ -307,7 +307,7 @@ public class WMSGetCapabilities {
         // Find all the info formats we support
         Iterable<TileLayer> layerIter = tld.getLayerList();
 
-        HashSet<String> formats = new HashSet<String>();
+        HashSet<String> formats = new HashSet<>();
 
         for (TileLayer layer : layerIter) {
             if (!layer.isEnabled() || !layer.isAdvertised()) {
@@ -359,7 +359,7 @@ public class WMSGetCapabilities {
             for (String gridSetId : layer.getGridSubsets()) {
                 GridSubset grid = layer.getGridSubset(gridSetId);
 
-                List<String> formats = new ArrayList<String>(2);
+                List<String> formats = new ArrayList<>(2);
 
                 if (layer.getMimeTypes() != null) {
                     for (MimeType mime : layer.getMimeTypes()) {
@@ -391,7 +391,7 @@ public class WMSGetCapabilities {
      * @return a list with an empty string for the default style, and any other style name verbatim
      */
     private List<String> getStyles(List<ParameterFilter> parameterFilters) {
-        List<String> styles = new ArrayList<String>(2);
+        List<String> styles = new ArrayList<>(2);
         styles.add(""); // the default style
 
         if (parameterFilters != null) {
@@ -423,8 +423,8 @@ public class WMSGetCapabilities {
         String srsStr = grid.getSRS().toString();
         StringBuilder resolutionsStr = new StringBuilder();
         double[] res = grid.getResolutions();
-        for (int i = 0; i < res.length; i++) {
-            resolutionsStr.append(Double.toString(res[i]) + " ");
+        for (double re : res) {
+            resolutionsStr.append(Double.toString(re) + " ");
         }
 
         String[] bs = boundsPrep(grid.getCoverageBestFitBounds());

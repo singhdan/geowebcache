@@ -22,6 +22,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
@@ -30,7 +32,9 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.GeoWebCacheExtensions;
+import org.geowebcache.config.BaseConfiguration;
 import org.geowebcache.config.ConfigurationAggregator;
+import org.geowebcache.config.ServerConfiguration;
 import org.geowebcache.config.TileLayerConfiguration;
 import org.geowebcache.config.meta.ServiceInformation;
 import org.geowebcache.grid.GridSet;
@@ -67,7 +71,7 @@ public class TileLayerDispatcher
      */
     public TileLayerDispatcher(GridSetBroker gridSetBroker, List<TileLayerConfiguration> configs) {
         this.gridSetBroker = gridSetBroker;
-        this.configs = configs == null ? new ArrayList<TileLayerConfiguration>() : configs;
+        this.configs = configs == null ? new ArrayList<>() : configs;
     }
 
     public TileLayerDispatcher(GridSetBroker gridSetBroker) {
@@ -75,8 +79,7 @@ public class TileLayerDispatcher
     }
 
     public boolean layerExists(final String layerName) {
-        for (int i = 0; i < configs.size(); i++) {
-            TileLayerConfiguration configuration = configs.get(i);
+        for (TileLayerConfiguration configuration : configs) {
             Optional<TileLayer> layer = configuration.getLayer(layerName);
             if (layer.isPresent()) {
                 return true;
@@ -93,8 +96,7 @@ public class TileLayerDispatcher
     public TileLayer getTileLayer(final String layerName) throws GeoWebCacheException {
         Preconditions.checkNotNull(layerName, "layerName is null");
 
-        for (int i = 0; i < configs.size(); i++) {
-            TileLayerConfiguration configuration = configs.get(i);
+        for (TileLayerConfiguration configuration : configs) {
             Optional<TileLayer> layer = configuration.getLayer(layerName);
             if (layer.isPresent()) {
                 return layer.get();
@@ -111,17 +113,15 @@ public class TileLayerDispatcher
 
     public int getLayerCount() {
         int count = 0;
-        for (int i = 0; i < configs.size(); i++) {
-            TileLayerConfiguration configuration = configs.get(i);
+        for (TileLayerConfiguration configuration : configs) {
             count += configuration.getLayerCount();
         }
         return count;
     }
 
     public Set<String> getLayerNames() {
-        Set<String> names = new HashSet<String>();
-        for (int i = 0; i < configs.size(); i++) {
-            TileLayerConfiguration configuration = configs.get(i);
+        Set<String> names = new HashSet<>();
+        for (TileLayerConfiguration configuration : configs) {
             names.addAll(configuration.getLayerNames());
         }
         return names;
@@ -137,18 +137,22 @@ public class TileLayerDispatcher
      */
     @SuppressWarnings("unchecked")
     public Iterable<TileLayer> getLayerList() {
-        List<Iterable<TileLayer>> perConfigLayers =
-                new ArrayList<Iterable<TileLayer>>(configs.size());
+        List<Iterable<TileLayer>> perConfigLayers = new ArrayList<>(configs.size());
 
         for (TileLayerConfiguration config : configs) {
             perConfigLayers.add((Iterable<TileLayer>) config.getLayers());
         }
 
-        return new CompositeIterable<TileLayer>(perConfigLayers);
+        return new CompositeIterable<>(perConfigLayers);
     }
 
     public ServiceInformation getServiceInformation() {
         return this.serviceInformation;
+    }
+
+    /** @param serviceInformation the serviceInformation to set */
+    public void setServiceInformation(ServiceInformation serviceInformation) {
+        this.serviceInformation = serviceInformation;
     }
 
     /** @see org.springframework.beans.factory.DisposableBean#destroy() */
@@ -302,6 +306,17 @@ public class TileLayerDispatcher
         this.configs =
                 GeoWebCacheExtensions.configurations(
                         TileLayerConfiguration.class, applicationContext);
+
+        Map<String, BaseConfiguration> config =
+                applicationContext.getBeansOfType(BaseConfiguration.class);
+        if (config != null && !config.isEmpty()) {
+            for (Entry<String, BaseConfiguration> e : config.entrySet()) {
+                if (ServerConfiguration.class.isAssignableFrom(e.getValue().getClass())) {
+                    setServiceInformation(
+                            ((ServerConfiguration) e.getValue()).getServiceInformation());
+                }
+            }
+        }
     }
 
     @Override

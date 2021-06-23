@@ -74,7 +74,7 @@ public class TileRange {
         if (rangeBounds == null) {
             this.rangeBounds = null;
         } else {
-            this.rangeBounds = new TreeMap<Integer, long[]>();
+            this.rangeBounds = new TreeMap<>();
             for (long[] bounds : rangeBounds) {
                 if (bounds != null) {
                     // could be null in case calling code is only interested in a subset of zoom
@@ -101,7 +101,7 @@ public class TileRange {
 
         if (z >= getZoomStart() && z <= getZoomStop()) {
 
-            long[] rB = rangeBounds((int) z);
+            long[] rB = rangeBounds(z);
 
             if (rB[0] <= x && rB[2] >= x && rB[1] <= y && rB[3] >= y) {
                 return true;

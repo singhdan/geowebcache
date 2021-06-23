@@ -54,9 +54,9 @@ public abstract class BlobStoreSuitabilityTest {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Theory
-    public void testEmptyOk(Object persistenceLocation) throws Exception {
+    public void emptyOk(Object persistenceLocation) throws Exception {
         suitability.setValue(CompositeBlobStore.StoreSuitabilityCheck.EMPTY);
-        assumeThat(persistenceLocation, (Matcher) empty());
+        assumeThat(persistenceLocation, empty());
 
         BlobStore store = create(persistenceLocation);
         assertThat(store, notNullValue(BlobStore.class));
@@ -64,9 +64,9 @@ public abstract class BlobStoreSuitabilityTest {
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Theory
-    public void testEmptyFail(Object persistenceLocation) throws Exception {
+    public void emptyFail(Object persistenceLocation) throws Exception {
         suitability.setValue(CompositeBlobStore.StoreSuitabilityCheck.EMPTY);
-        assumeThat(persistenceLocation, (Matcher) not(empty()));
+        assumeThat(persistenceLocation, not(empty()));
 
         exception.expect(EXCEPTION_CLASS);
         @SuppressWarnings("unused")
@@ -75,9 +75,9 @@ public abstract class BlobStoreSuitabilityTest {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Theory
-    public void testExistingOk(Object persistenceLocation) throws Exception {
+    public void existingOk(Object persistenceLocation) throws Exception {
         suitability.setValue(CompositeBlobStore.StoreSuitabilityCheck.EXISTING);
-        assumeThat(persistenceLocation, (either(empty()).or((Matcher) existing())));
+        assumeThat(persistenceLocation, (either(empty()).or(existing())));
 
         BlobStore store = create(persistenceLocation);
         assertThat(store, notNullValue(BlobStore.class));
@@ -85,9 +85,9 @@ public abstract class BlobStoreSuitabilityTest {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     @Theory
-    public void testExistingFail(Object persistenceLocation) throws Exception {
+    public void existingFail(Object persistenceLocation) throws Exception {
         suitability.setValue(CompositeBlobStore.StoreSuitabilityCheck.EXISTING);
-        assumeThat(persistenceLocation, not(either(empty()).or((Matcher) existing())));
+        assumeThat(persistenceLocation, not(either(empty()).or(existing())));
 
         exception.expect(EXCEPTION_CLASS);
         @SuppressWarnings("unused")
@@ -95,7 +95,7 @@ public abstract class BlobStoreSuitabilityTest {
     }
 
     @Theory
-    public void testNoneOk(Object persistenceLocation) throws Exception {
+    public void noneOk(Object persistenceLocation) throws Exception {
         suitability.setValue(CompositeBlobStore.StoreSuitabilityCheck.NONE);
 
         BlobStore store = create(persistenceLocation);

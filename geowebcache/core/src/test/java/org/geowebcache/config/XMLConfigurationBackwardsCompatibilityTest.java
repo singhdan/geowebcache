@@ -14,8 +14,12 @@
  */
 package org.geowebcache.config;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -50,63 +54,63 @@ public class XMLConfigurationBackwardsCompatibilityTest {
     public void testLoadPre10() throws Exception {
         Iterable<TileLayer> layers = loadResource("geowebcache_pre10.xml");
         TileLayer layer = findLayer(layers, "topp:states");
-        assertTrue(layer != null);
+        assertNotNull(layer);
         TileLayer layer2 = findLayer(layers, "topp:states2");
         GridSubset grid = layer2.getGridSubsetForSRS(SRS.getSRS(2163));
-        assertTrue(layer2 != null);
-        assertTrue(grid != null);
+        assertNotNull(layer2);
+        assertNotNull(grid);
     }
 
     @Test
     public void testLoad10() throws Exception {
         Iterable<TileLayer> layers = loadResource("geowebcache_10.xml");
         TileLayer layer = findLayer(layers, "topp:states");
-        assertTrue(layer != null);
+        assertNotNull(layer);
         // assertEquals(layer.getCachePrefix(), "/var/lib/geowebcache/topp_states");
         TileLayer layer2 = findLayer(layers, "topp:states2");
         GridSubset grid = layer2.getGridSubsetForSRS(SRS.getSRS(2163));
-        assertTrue(layer2 != null);
-        assertTrue(grid != null);
+        assertNotNull(layer2);
+        assertNotNull(grid);
     }
 
     @Test
     public void testLoad101() throws Exception {
         Iterable<TileLayer> layers = loadResource("geowebcache_101.xml");
         TileLayer layer = findLayer(layers, "topp:states");
-        assertTrue(layer != null);
+        assertNotNull(layer);
         // assertEquals(layer.getCachePrefix(), "/var/lib/geowebcache/topp_states");
         TileLayer layer2 = findLayer(layers, "topp:states2");
         GridSubset grid = layer2.getGridSubsetForSRS(SRS.getSRS(2163));
-        assertTrue(layer2 != null);
-        assertTrue(grid != null);
+        assertNotNull(layer2);
+        assertNotNull(grid);
 
         // The additions in 1.0.1 are allowCacheBypass and backendTimeout
         assertEquals(layer.getBackendTimeout().intValue(), 60);
         assertEquals(layer2.getBackendTimeout().intValue(), 235);
-        assertEquals(layer.isCacheBypassAllowed().booleanValue(), true);
-        assertEquals(layer2.isCacheBypassAllowed().booleanValue(), false);
+        assertTrue(layer.isCacheBypassAllowed().booleanValue());
+        assertFalse(layer2.isCacheBypassAllowed().booleanValue());
     }
 
     @Test
     public void testLoad114() throws Exception {
         Iterable<TileLayer> layers = loadResource("geowebcache_114.xml");
         TileLayer layer = findLayer(layers, "topp:states");
-        assertTrue(layer != null);
+        assertNotNull(layer);
         // assertEquals(layer.getCachePrefix(), "/var/lib/geowebcache/topp_states");
         TileLayer layer2 = findLayer(layers, "topp:states2");
         GridSubset grid = layer2.getGridSubsetForSRS(SRS.getSRS(2163));
-        assertTrue(layer2 != null);
-        assertTrue(grid != null);
+        assertNotNull(layer2);
+        assertNotNull(grid);
 
         // The additions in 1.0.1 are allowCacheBypass and backendTimeout
         assertEquals(layer.getBackendTimeout().intValue(), 120);
         assertEquals(layer2.getBackendTimeout().intValue(), 120);
-        assertEquals(layer.isCacheBypassAllowed().booleanValue(), true);
-        assertEquals(layer2.isCacheBypassAllowed().booleanValue(), true);
+        assertTrue(layer.isCacheBypassAllowed().booleanValue());
+        assertTrue(layer2.isCacheBypassAllowed().booleanValue());
 
         FormatModifier fm = layer.getFormatModifier(ImageMime.jpeg);
         assertEquals(fm.getBgColor(), "0xDDDDDD");
-        assertTrue(fm.getRequestFormat().equals(ImageMime.png));
+        assertEquals(fm.getRequestFormat(), ImageMime.png);
 
         List<RequestFilter> filters = layer.getRequestFilters();
         assertEquals(filters.get(0).getName(), "testWMSRasterFilter");
@@ -117,22 +121,22 @@ public class XMLConfigurationBackwardsCompatibilityTest {
     public void testLoad115() throws Exception {
         Iterable<TileLayer> layers = loadResource("geowebcache_115.xml");
         TileLayer layer = findLayer(layers, "topp:states");
-        assertTrue(layer != null);
+        assertNotNull(layer);
         // assertEquals(layer.getCachePrefix(), "/var/lib/geowebcache/topp_states");
         TileLayer layer2 = findLayer(layers, "topp:states2");
         GridSubset grid = layer2.getGridSubsetForSRS(SRS.getSRS(2163));
-        assertTrue(layer2 != null);
-        assertTrue(grid != null);
+        assertNotNull(layer2);
+        assertNotNull(grid);
 
         // The additions in 1.0.1 are allowCacheBypass and backendTimeout
         assertEquals(layer.getBackendTimeout().intValue(), 120);
         assertEquals(layer2.getBackendTimeout().intValue(), 120);
-        assertEquals(layer.isCacheBypassAllowed().booleanValue(), true);
-        assertEquals(layer2.isCacheBypassAllowed().booleanValue(), true);
+        assertTrue(layer.isCacheBypassAllowed().booleanValue());
+        assertTrue(layer2.isCacheBypassAllowed().booleanValue());
 
         FormatModifier fm = layer.getFormatModifier(ImageMime.jpeg);
         assertEquals(fm.getBgColor(), "0xDDDDDD");
-        assertTrue(fm.getRequestFormat().equals(ImageMime.png));
+        assertEquals(fm.getRequestFormat(), ImageMime.png);
 
         List<RequestFilter> filters = layer.getRequestFilters();
         RequestFilter filter0 = filters.get(0);
@@ -248,6 +252,6 @@ public class XMLConfigurationBackwardsCompatibilityTest {
         tx.setOutputProperty(OutputKeys.INDENT, "yes");
 
         tx.transform(
-                new DOMSource(dom), new StreamResult(new OutputStreamWriter(System.out, "utf-8")));
+                new DOMSource(dom), new StreamResult(new OutputStreamWriter(System.out, UTF_8)));
     }
 }

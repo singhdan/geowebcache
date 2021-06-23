@@ -18,7 +18,6 @@ package org.geowebcache.config;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -223,17 +222,10 @@ public class XMLFileResourceProvider implements ConfigurationResourceProvider {
                             + getClass().getResource(templateLocation).toExternalForm());
             // grab template from classpath
             try {
-                InputStream templateStream = getClass().getResourceAsStream(templateLocation);
-                try {
-                    OutputStream output = new FileOutputStream(xmlFile);
-                    try {
-                        IOUtils.copy(templateStream, output);
-                    } finally {
-                        output.flush();
-                        output.close();
-                    }
-                } finally {
-                    templateStream.close();
+                try (InputStream templateStream = getClass().getResourceAsStream(templateLocation);
+                        OutputStream output = new FileOutputStream(xmlFile); ) {
+                    IOUtils.copy(templateStream, output);
+                    output.flush();
                 }
             } catch (IOException e) {
                 throw new IOException(
@@ -253,16 +245,14 @@ public class XMLFileResourceProvider implements ConfigurationResourceProvider {
 
         String[] previousBackUps =
                 parentFile.list(
-                        new FilenameFilter() {
-                            public boolean accept(File dir, String name) {
-                                if (configFileName.equals(name)) {
-                                    return false;
-                                }
-                                if (name.startsWith(configFileName) && name.endsWith(".bak")) {
-                                    return true;
-                                }
+                        (dir, name) -> {
+                            if (configFileName.equals(name)) {
                                 return false;
                             }
+                            if (name.startsWith(configFileName) && name.endsWith(".bak")) {
+                                return true;
+                            }
+                            return false;
                         });
 
         final int maxBackups = 10;

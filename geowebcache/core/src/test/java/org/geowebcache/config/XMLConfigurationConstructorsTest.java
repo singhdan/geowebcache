@@ -21,7 +21,7 @@ import static org.easymock.EasyMock.replay;
 import static org.easymock.EasyMock.verify;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 import java.io.File;
 import java.io.IOException;
@@ -73,7 +73,7 @@ public class XMLConfigurationConstructorsTest {
 
         expect(provider.getApplicationContext()).andStubReturn(appContext);
         expect(appContext.getServletContext()).andStubReturn(svltContext);
-        expect(svltContext.getInitParameter((String) anyObject())).andStubReturn(null);
+        expect(svltContext.getInitParameter(anyObject())).andStubReturn(null);
         expect(storageFinder.getDefaultPath()).andStubReturn(cacheDir.getCanonicalPath());
         expect(appContext.getBeansOfType(org.geowebcache.config.XMLConfigurationProvider.class))
                 .andReturn(Collections.emptyMap());

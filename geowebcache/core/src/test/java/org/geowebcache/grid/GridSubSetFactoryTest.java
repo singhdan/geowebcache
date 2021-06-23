@@ -1,15 +1,18 @@
 package org.geowebcache.grid;
 
-import java.util.Arrays;
-import java.util.Collections;
-import junit.framework.TestCase;
-import org.geowebcache.config.DefaultGridsets;
+import static org.junit.Assert.assertArrayEquals;
 
-public class GridSubSetFactoryTest extends TestCase {
+import java.util.Collections;
+import org.geowebcache.config.DefaultGridsets;
+import org.junit.Assert;
+import org.junit.Test;
+
+public class GridSubSetFactoryTest {
 
     GridSetBroker gridSetBroker =
             new GridSetBroker(Collections.singletonList(new DefaultGridsets(false, false)));
 
+    @Test
     public void testCoverageBounds() throws Exception {
         BoundingBox bbox = new BoundingBox(0, 0, 180, 90);
 
@@ -19,9 +22,10 @@ public class GridSubSetFactoryTest extends TestCase {
         long[] ret = grid.getCoverage(0);
         long[] correct = {1, 0, 1, 0, 0};
 
-        assertTrue(Arrays.equals(correct, ret));
+        assertArrayEquals(correct, ret);
     }
 
+    @Test
     public void testCoverageBounds2() throws Exception {
         BoundingBox bbox = new BoundingBox(0, 0, 180, 90);
 
@@ -31,9 +35,10 @@ public class GridSubSetFactoryTest extends TestCase {
         long[] ret = grid.getCoverage(1);
         long[] correct = {2, 1, 3, 1, 1};
 
-        assertTrue(Arrays.equals(correct, ret));
+        assertArrayEquals(correct, ret);
     }
 
+    @Test
     public void testGridNames() throws Exception {
         BoundingBox bbox = new BoundingBox(0, 0, 180, 90);
 
@@ -45,12 +50,13 @@ public class GridSubSetFactoryTest extends TestCase {
 
         String[] gridNames = grid.getGridNames();
         final int nlevels = 1 + (grid.getZoomStop() - grid.getZoomStart());
-        assertEquals(nlevels, gridNames.length);
+        Assert.assertEquals(nlevels, gridNames.length);
         for (String name : gridNames) {
-            assertNotNull(name);
+            Assert.assertNotNull(name);
         }
     }
 
+    @Test
     public void testWMTSCoverage() throws Exception {
         BoundingBox bbox = new BoundingBox(0, 0, 180, 90);
 
@@ -58,12 +64,13 @@ public class GridSubSetFactoryTest extends TestCase {
                 GridSubsetFactory.createGridSubSet(gridSetBroker.getWorldEpsg4326(), bbox, 1, 3);
 
         long[][] coverages = grid.getWMTSCoverages();
-        assertEquals(3, coverages.length);
+        Assert.assertEquals(3, coverages.length);
         long[] correct = {2, 0, 3, 0};
 
-        assertTrue(Arrays.equals(correct, coverages[0]));
+        assertArrayEquals(correct, coverages[0]);
     }
 
+    @Test
     public void testGridIndex() throws Exception {
         BoundingBox bbox = new BoundingBox(0, 0, 180, 90);
 
@@ -75,7 +82,7 @@ public class GridSubSetFactoryTest extends TestCase {
 
         String[] gridNames = grid.getGridNames();
         for (int i = 0, z = zoomStart; i < gridNames.length; i++, z++) {
-            assertEquals(z, grid.getGridIndex(gridNames[i]));
+            Assert.assertEquals(z, grid.getGridIndex(gridNames[i]));
         }
     }
 }

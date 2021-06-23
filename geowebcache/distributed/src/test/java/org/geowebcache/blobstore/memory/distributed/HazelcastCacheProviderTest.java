@@ -17,6 +17,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.Hazelcast;
@@ -110,7 +111,7 @@ public class HazelcastCacheProviderTest {
         // Put a TileObject
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
         long[] xyz = {1L, 2L, 3L};
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         TileObject to =
@@ -129,26 +130,29 @@ public class HazelcastCacheProviderTest {
         assertEquals(to.getBlobFormat(), to2.getBlobFormat());
 
         // Checks if the resources are equals
-        InputStream is = to.getBlob().getInputStream();
-        InputStream is2 = to2.getBlob().getInputStream();
-        checkInputStreams(is, is2);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is2 = to2.getBlob().getInputStream()) {
+            checkInputStreams(is, is2);
+        }
 
         // Ensure Caches contain the result
         TileObject to3 = cache1.getTileObj(to);
         assertNotNull(to3);
 
         // Checks if the resources are equals
-        is = to.getBlob().getInputStream();
-        InputStream is3 = to3.getBlob().getInputStream();
-        checkInputStreams(is, is3);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is3 = to3.getBlob().getInputStream()) {
+            checkInputStreams(is, is3);
+        }
 
         TileObject to4 = cache2.getTileObj(to);
         assertNotNull(to4);
 
         // Checks if the resources are equals
-        is = to.getBlob().getInputStream();
-        InputStream is4 = to4.getBlob().getInputStream();
-        checkInputStreams(is, is4);
+        try (InputStream is = to.getBlob().getInputStream();
+                InputStream is4 = to4.getBlob().getInputStream()) {
+            checkInputStreams(is, is4);
+        }
     }
 
     @Test
@@ -160,7 +164,7 @@ public class HazelcastCacheProviderTest {
         assertEquals(0, cache1.getStatistics().getActualSize());
         assertEquals(0, cache2.getStatistics().getActualSize());
 
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "y");
 
@@ -180,9 +184,10 @@ public class HazelcastCacheProviderTest {
         assertTrue(mem2.get(to2));
 
         // Checks if the resources are equals
-        InputStream is = to2.getBlob().getInputStream();
-        InputStream is2 = bytes.getInputStream();
-        checkInputStreams(is, is2);
+        try (InputStream is = to2.getBlob().getInputStream();
+                InputStream is2 = bytes.getInputStream()) {
+            checkInputStreams(is, is2);
+        }
 
         // Delete TileObject
         TileObject to3 =
@@ -221,6 +226,7 @@ public class HazelcastCacheProviderTest {
     /**
      * Checks if the streams are equals, note that this method also closes the {@link InputStream}
      */
+    @SuppressWarnings("PMD.UseTryWithResources") // resources not created here
     private void checkInputStreams(InputStream is, InputStream is2) throws IOException {
         try {
             // Ensure the two contents are equal
@@ -231,13 +237,13 @@ public class HazelcastCacheProviderTest {
                 is.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
-                assertTrue(false);
+                fail();
             }
             try {
                 is2.close();
             } catch (IOException e) {
                 LOG.error(e.getMessage(), e);
-                assertTrue(false);
+                fail();
             }
         }
     }

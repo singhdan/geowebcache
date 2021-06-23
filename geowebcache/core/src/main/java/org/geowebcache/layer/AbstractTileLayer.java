@@ -17,7 +17,6 @@ package org.geowebcache.layer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -70,7 +69,7 @@ public abstract class AbstractTileLayer extends TileLayer {
     protected List<FormatModifier> formatModifiers;
 
     // 1.1.x compatibility
-    protected Hashtable<SRS, XMLOldGrid> grids;
+    protected Map<SRS, XMLOldGrid> grids;
 
     protected List<XMLGridSubset> gridSubsets;
 
@@ -112,7 +111,7 @@ public abstract class AbstractTileLayer extends TileLayer {
 
     protected Object readResolve() {
         if (gridSubsets == null) {
-            gridSubsets = new ArrayList<XMLGridSubset>();
+            gridSubsets = new ArrayList<>();
         }
         return this;
     }
@@ -203,7 +202,7 @@ public abstract class AbstractTileLayer extends TileLayer {
 
     @Override
     public List<MetadataURL> getMetadataURLs() {
-        return metadataURLs == null ? null : new ArrayList<MetadataURL>(metadataURLs);
+        return metadataURLs == null ? null : new ArrayList<>(metadataURLs);
     }
 
     /** Retrieves a list of Grids for this layer */
@@ -222,7 +221,7 @@ public abstract class AbstractTileLayer extends TileLayer {
     public final boolean initialize(GridSetBroker gridSetBroker) {
 
         if (this.expireCacheList == null) {
-            this.expireCacheList = new ArrayList<ExpirationRule>(1);
+            this.expireCacheList = new ArrayList<>(1);
 
             if (this.expireCache == null) {
                 expireCacheList.add(new ExpirationRule(0, GWCVars.CACHE_NEVER_EXPIRE));
@@ -236,7 +235,7 @@ public abstract class AbstractTileLayer extends TileLayer {
         }
 
         if (this.expireClientsList == null) {
-            this.expireClientsList = new ArrayList<ExpirationRule>(1);
+            this.expireClientsList = new ArrayList<>(1);
 
             if (this.expireClients == null) {
                 expireClientsList.add(new ExpirationRule(0, 7200));
@@ -255,13 +254,13 @@ public abstract class AbstractTileLayer extends TileLayer {
 
         try {
             // mimetypes
-            this.formats = new ArrayList<MimeType>();
+            this.formats = new ArrayList<>();
             if (mimeFormats != null) {
                 for (String fmt : mimeFormats) {
                     formats.add(MimeType.createFromFormat(fmt));
                 }
             }
-            if (formats.size() == 0) {
+            if (formats.isEmpty()) {
                 formats.add(0, MimeType.createFromFormat("image/png"));
                 formats.add(1, MimeType.createFromFormat("image/jpeg"));
             }
@@ -271,13 +270,13 @@ public abstract class AbstractTileLayer extends TileLayer {
 
         try {
             // mimetypes for info
-            this.infoFormats = new ArrayList<MimeType>();
+            this.infoFormats = new ArrayList<>();
             if (infoMimeFormats != null) {
                 for (String fmt : infoMimeFormats) {
                     infoFormats.add(MimeType.createFromFormat(fmt));
                 }
             }
-            if (infoFormats.size() == 0) {
+            if (infoFormats.isEmpty()) {
                 infoFormats.add(MimeType.createFromFormat("text/plain"));
                 infoFormats.add(MimeType.createFromFormat("text/html"));
                 infoFormats.add(MimeType.createFromFormat("application/vnd.ogc.gml"));
@@ -287,11 +286,11 @@ public abstract class AbstractTileLayer extends TileLayer {
         }
 
         if (subSets == null) {
-            subSets = new HashMap<String, GridSubset>();
+            subSets = new HashMap<>();
         }
 
         if (this.gridSubsets == null) {
-            this.gridSubsets = new ArrayList<XMLGridSubset>();
+            this.gridSubsets = new ArrayList<>();
         }
 
         for (XMLGridSubset xmlGridSubset : gridSubsets) {
@@ -320,7 +319,7 @@ public abstract class AbstractTileLayer extends TileLayer {
             grids = null;
         }
 
-        if (this.subSets.size() == 0) {
+        if (this.subSets.isEmpty()) {
             subSets.put(
                     gridSetBroker.getWorldEpsg4326().getName(),
                     GridSubsetFactory.createGridSubSet(gridSetBroker.getWorldEpsg4326()));
@@ -403,7 +402,7 @@ public abstract class AbstractTileLayer extends TileLayer {
     }
 
     public List<String> getMimeFormats() {
-        return mimeFormats == null ? null : new ArrayList<String>(mimeFormats);
+        return mimeFormats == null ? null : new ArrayList<>(mimeFormats);
     }
 
     /** @return array with supported MIME types */
@@ -413,7 +412,7 @@ public abstract class AbstractTileLayer extends TileLayer {
     }
 
     public List<String> getInfoMimeFormats() {
-        return infoMimeFormats == null ? null : new ArrayList<String>(infoMimeFormats);
+        return infoMimeFormats == null ? null : new ArrayList<>(infoMimeFormats);
     }
 
     /** @return array with supported MIME types for information */

@@ -14,6 +14,8 @@
  */
 package org.geowebcache.config;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import com.thoughtworks.xstream.XStream;
 import com.thoughtworks.xstream.io.xml.DomReader;
 import java.io.FileNotFoundException;
@@ -58,7 +60,12 @@ import org.geowebcache.config.ContextualConfigurationProvider.Context;
 import org.geowebcache.config.legends.LegendsRawInfo;
 import org.geowebcache.config.legends.LegendsRawInfoConverter;
 import org.geowebcache.config.meta.ServiceInformation;
-import org.geowebcache.filter.parameters.*;
+import org.geowebcache.filter.parameters.CaseNormalizer;
+import org.geowebcache.filter.parameters.FloatParameterFilter;
+import org.geowebcache.filter.parameters.IntegerParameterFilter;
+import org.geowebcache.filter.parameters.ParameterFilter;
+import org.geowebcache.filter.parameters.RegexParameterFilter;
+import org.geowebcache.filter.parameters.StringParameterFilter;
 import org.geowebcache.filter.request.CircularExtentFilter;
 import org.geowebcache.filter.request.FileRasterFilter;
 import org.geowebcache.filter.request.WMSRasterFilter;
@@ -299,13 +306,9 @@ public class XMLConfiguration
 
     private GeoWebCacheConfiguration loadConfiguration() throws ConfigurationException {
         Assert.isTrue(resourceProvider.hasInput(), "Resource provider must have an input");
-        InputStream in;
         try {
-            in = resourceProvider.in();
-            try {
+            try (InputStream in = resourceProvider.in()) {
                 return loadConfiguration(in);
-            } finally {
-                in.close();
             }
         } catch (IOException e) {
             throw new ConfigurationException(
@@ -318,8 +321,8 @@ public class XMLConfiguration
         Node rootNode = loadDocument(xmlFile);
         XStream xs = getConfiguredXStreamWithContext(new GeoWebCacheXStream(), Context.PERSIST);
 
-        GeoWebCacheConfiguration config;
-        config = (GeoWebCacheConfiguration) xs.unmarshal(new DomReader((Element) rootNode));
+        GeoWebCacheConfiguration config =
+                (GeoWebCacheConfiguration) xs.unmarshal(new DomReader((Element) rootNode));
         return config;
     }
 
@@ -338,13 +341,11 @@ public class XMLConfiguration
     }
 
     public XStream getConfiguredXStream(XStream xs) {
-        return getConfiguredXStreamWithContext(
-                xs, this.context, (ContextualConfigurationProvider.Context) null);
+        return getConfiguredXStreamWithContext(xs, this.context, null);
     }
 
     public static XStream getConfiguredXStream(XStream xs, WebApplicationContext context) {
-        return getConfiguredXStreamWithContext(
-                xs, context, (ContextualConfigurationProvider.Context) null);
+        return getConfiguredXStreamWithContext(xs, context, null);
     }
 
     public XStream getConfiguredXStreamWithContext(
@@ -472,7 +473,7 @@ public class XMLConfiguration
         // create the XStream for serializing the configuration
         XStream xs = getConfiguredXStreamWithContext(new GeoWebCacheXStream(), Context.PERSIST);
 
-        try (OutputStreamWriter writer = new OutputStreamWriter(resourceProvider.out(), "UTF-8")) {
+        try (OutputStreamWriter writer = new OutputStreamWriter(resourceProvider.out(), UTF_8)) {
             // set version to latest
             String currentSchemaVersion = getCurrentSchemaVersion();
             getGwcConfig().setVersion(currentSchemaVersion);
@@ -848,7 +849,7 @@ public class XMLConfiguration
     }
 
     private void updateLayers() {
-        Map<String, TileLayer> buff = new HashMap<String, TileLayer>();
+        Map<String, TileLayer> buff = new HashMap<>();
         for (TileLayer layer : getGwcConfig().getLayers()) {
             buff.put(layer.getName(), layer);
         }

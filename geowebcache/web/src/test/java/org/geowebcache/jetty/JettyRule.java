@@ -8,7 +8,11 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.eclipse.jetty.server.*;
+import org.eclipse.jetty.server.Connector;
+import org.eclipse.jetty.server.HttpConfiguration;
+import org.eclipse.jetty.server.HttpConnectionFactory;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.util.thread.QueuedThreadPool;
 import org.eclipse.jetty.webapp.WebAppContext;
 import org.junit.rules.TemporaryFolder;
@@ -20,6 +24,7 @@ import org.junit.runners.model.Statement;
  *
  * @author Kevin Smith, Boundless
  */
+@SuppressWarnings("PMD.CloseResource")
 public class JettyRule extends org.junit.rules.ExternalResource {
 
     private static final String JETTY_PORT_PROPERTY = "jetty.port";

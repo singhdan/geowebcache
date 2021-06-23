@@ -19,7 +19,8 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.fail;
 
 import com.thoughtworks.xstream.XStream;
 import java.util.Arrays;
@@ -75,7 +76,6 @@ public class IntegerParameterFilterTest {
     @Test
     public void testThreshold() throws Exception {
         filter.setThreshold(15);
-        ;
 
         for (String test : Arrays.asList("42", "2", "0", "-1", "-200")) {
             assertThat(

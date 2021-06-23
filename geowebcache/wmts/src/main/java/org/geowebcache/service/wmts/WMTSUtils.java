@@ -30,6 +30,13 @@ final class WMTSUtils {
         return layer.getMimeTypes().stream().map(MimeType::getFormat).collect(Collectors.toList());
     }
 
+    protected static List<String> getLayerFormatsExtensions(TileLayer layer) throws IOException {
+        return layer.getMimeTypes()
+                .stream()
+                .map(MimeType::getFileExtension)
+                .collect(Collectors.toList());
+    }
+
     public static List<String> getInfoFormats(TileLayer layer) {
         return layer.getInfoMimeTypes()
                 .stream()
@@ -38,7 +45,7 @@ final class WMTSUtils {
     }
 
     public static List<ParameterFilter> getLayerDimensions(List<ParameterFilter> filters) {
-        List<ParameterFilter> dimensions = new ArrayList<ParameterFilter>(0);
+        List<ParameterFilter> dimensions = new ArrayList<>(0);
         if (filters != null) {
             dimensions =
                     filters.stream()

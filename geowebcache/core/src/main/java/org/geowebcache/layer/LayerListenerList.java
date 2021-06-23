@@ -25,7 +25,7 @@ import org.geowebcache.conveyor.ConveyorTile;
  */
 public class LayerListenerList {
 
-    private List<TileLayerListener> listeners = new CopyOnWriteArrayList<TileLayerListener>();
+    private List<TileLayerListener> listeners = new CopyOnWriteArrayList<>();
 
     public synchronized void addListener(TileLayerListener listener) {
         if (listener != null) {
@@ -40,9 +40,9 @@ public class LayerListenerList {
     }
 
     public void sendTileRequested(TileLayer layer, ConveyorTile tile) {
-        if (listeners.size() > 0) {
-            for (int i = 0; i < listeners.size(); i++) {
-                listeners.get(i).tileRequested(layer, tile);
+        if (!listeners.isEmpty()) {
+            for (TileLayerListener listener : listeners) {
+                listener.tileRequested(layer, tile);
             }
         }
     }

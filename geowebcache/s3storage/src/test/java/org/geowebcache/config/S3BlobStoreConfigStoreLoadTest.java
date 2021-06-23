@@ -66,7 +66,7 @@ public class S3BlobStoreConfigStoreLoadTest {
 
     @Before
     public void init() {
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -138,6 +138,7 @@ public class S3BlobStoreConfigStoreLoadTest {
         return store;
     }
 
+    @SuppressWarnings("unchecked") // @SafeVarArgs needed in Mockito, check upgrades
     private void setupXMLConfig() throws IOException, GeoWebCacheException {
         configDir = temp.getRoot();
         configFile = temp.newFile("geowebcache.xml");
@@ -147,7 +148,7 @@ public class S3BlobStoreConfigStoreLoadTest {
                         XMLConfigurationBackwardsCompatibilityTest.LATEST_FILENAME);
         FileUtils.copyURLToFile(source, configFile);
 
-        providers = new HashMap<String, XMLConfigurationProvider>();
+        providers = new HashMap<>();
         Mockito.when(context.getApplicationContext()).thenReturn(webCtx, webCtx, webCtx, webCtx);
         Mockito.when(webCtx.getBeansOfType(XMLConfigurationProvider.class))
                 .thenReturn(providers, providers);

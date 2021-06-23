@@ -74,7 +74,7 @@ public class GridSubset {
     }
 
     public BoundingBox boundsFromIndex(long[] tileIndex) {
-        return gridSet.boundsFromIndex(tileIndex);
+        return getGridSet().boundsFromIndex(tileIndex);
     }
 
     /**
@@ -270,7 +270,7 @@ public class GridSubset {
     }
 
     public String[] getGridNames() {
-        List<String> ret = new ArrayList<String>(gridCoverageLevels.size());
+        List<String> ret = new ArrayList<>(gridCoverageLevels.size());
 
         final int zoomStart = getZoomStart();
         final int zoomStop = getZoomStop();

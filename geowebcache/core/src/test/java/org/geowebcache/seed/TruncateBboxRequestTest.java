@@ -20,7 +20,7 @@ import static org.hamcrest.Matchers.any;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasProperty;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertThat;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -83,8 +83,8 @@ public class TruncateBboxRequestTest {
         allParams.add(Collections.singletonMap("STYLES", "style1"));
         allParams.add(Collections.singletonMap("STYLES", "style2"));
 
-        final long[][] coverages = new long[][] {{0, 0, 0, 0, 0}, {0, 0, 1, 1, 1}, {0, 0, 4, 4, 2}};
-        final int[] metaFactors = new int[] {1, 1};
+        final long[][] coverages = {{0, 0, 0, 0, 0}, {0, 0, 1, 1, 1}, {0, 0, 4, 4, 2}};
+        final int[] metaFactors = {1, 1};
 
         // Boring mocks
         EasyMock.expect(broker.getCachedParameters(layerName))

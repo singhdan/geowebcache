@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
-import junit.framework.TestCase;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.easymock.EasyMock;
@@ -29,13 +28,16 @@ import org.geowebcache.io.Resource;
 import org.geowebcache.mime.ImageMime;
 import org.geowebcache.mime.MimeType;
 import org.geowebcache.storage.blobstore.file.FileBlobStore;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Test;
 
-public class BlobStoreTest extends TestCase {
+public class BlobStoreTest {
     public static final String TEST_BLOB_DIR_NAME = "gwcTestBlobs";
     private BlobStore fbs;
 
-    @Override
-    protected void tearDown() throws Exception {
+    @After
+    public void tearDown() throws Exception {
         if (fbs != null) {
             fbs.destroy();
         }
@@ -45,19 +47,21 @@ public class BlobStoreTest extends TestCase {
         if (fh.exists()) {
             FileUtils.deleteDirectory(fh);
             if (fh.exists()) {
-                System.out.println(
-                        "Unable to delete " + org.geowebcache.util.FileUtils.printFileTree(fh));
-                fail("Could not cleanup blob store directory");
+                Assert.fail(
+                        "Could not cleanup blob store directory\n"
+                                + "Unable to delete "
+                                + org.geowebcache.util.FileUtils.printFileTree(fh));
             }
         }
     }
 
+    @Test
     public void testTile() throws Exception {
         fbs = setup();
 
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
         long[] xyz = {1L, 2L, 3L};
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         TileObject to =
@@ -71,18 +75,19 @@ public class BlobStoreTest extends TestCase {
                         "test:123123 112", xyz, "EPSG:4326", "image/jpeg", parameters);
         fbs.get(to2);
 
-        assertEquals(to.getBlobFormat(), to2.getBlobFormat());
+        Assert.assertEquals(to.getBlobFormat(), to2.getBlobFormat());
 
         try (InputStream is = to.getBlob().getInputStream();
                 InputStream is2 = to2.getBlob().getInputStream()) {
-            assertTrue(IOUtils.contentEquals(is, is2));
+            Assert.assertTrue(IOUtils.contentEquals(is, is2));
         }
     }
 
+    @Test
     public void testTileDelete() throws Exception {
         fbs = setup();
 
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
 
@@ -101,7 +106,7 @@ public class BlobStoreTest extends TestCase {
 
         try (InputStream is = to2.getBlob().getInputStream();
                 InputStream is2 = bytes.getInputStream()) {
-            assertTrue(IOUtils.contentEquals(is, is2));
+            Assert.assertTrue(IOUtils.contentEquals(is, is2));
         }
         TileObject to3 =
                 TileObject.createQueryTileObject(
@@ -111,14 +116,15 @@ public class BlobStoreTest extends TestCase {
         TileObject to4 =
                 TileObject.createQueryTileObject(
                         "test:123123 112", xyz, "EPSG:4326", "image/jpeg", parameters);
-        assertFalse(fbs.get(to4));
+        Assert.assertFalse(fbs.get(to4));
     }
 
+    @Test
     public void testTilRangeDelete() throws Exception {
         fbs = setup();
 
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         MimeType mime = ImageMime.png;
@@ -167,7 +173,7 @@ public class BlobStoreTest extends TestCase {
         fbs.get(firstTO);
         try (InputStream is = firstTO.getBlob().getInputStream();
                 InputStream is2 = bytes.getInputStream(); ) {
-            assertTrue(IOUtils.contentEquals(is, is2));
+            Assert.assertTrue(IOUtils.contentEquals(is, is2));
         }
         TileObject lastTO =
                 TileObject.createQueryTileObject(
@@ -179,7 +185,7 @@ public class BlobStoreTest extends TestCase {
         fbs.get(lastTO);
         try (InputStream is = lastTO.getBlob().getInputStream();
                 InputStream is2 = bytes.getInputStream()) {
-            assertTrue(IOUtils.contentEquals(is, is2));
+            Assert.assertTrue(IOUtils.contentEquals(is, is2));
         }
 
         TileObject midTO =
@@ -192,13 +198,14 @@ public class BlobStoreTest extends TestCase {
         fbs.get(midTO);
         Resource res = midTO.getBlob();
 
-        assertNull(res);
+        Assert.assertNull(res);
     }
 
+    @Test
     public void testRenameLayer() throws Exception {
         fbs = setup();
         Resource bytes = new ByteArrayResource("1 2 3 4 5 6 test".getBytes());
-        Map<String, String> parameters = new HashMap<String, String>();
+        Map<String, String> parameters = new HashMap<>();
         parameters.put("a", "x");
         parameters.put("b", "ø");
         MimeType mime = ImageMime.png;
@@ -229,15 +236,15 @@ public class BlobStoreTest extends TestCase {
         fbs.addListener(listener);
 
         boolean renamed = fbs.rename(layerName, newLayerName);
-        assertTrue(renamed);
+        Assert.assertTrue(renamed);
 
         EasyMock.verify(listener);
 
         try {
             fbs.rename(layerName, newLayerName);
-            fail("Expected StorageException, target dir already exists");
+            Assert.fail("Expected StorageException, target dir already exists");
         } catch (StorageException e) {
-            assertTrue(true);
+            Assert.assertTrue(true);
         }
     }
 
@@ -247,9 +254,11 @@ public class BlobStoreTest extends TestCase {
         if (!fh.exists()) {
             Files.createDirectory(fh.toPath());
             if (!fh.exists()) {
-                System.out.println(
-                        "Unable to create " + org.geowebcache.util.FileUtils.printFileTree(fh));
-                throw new StorageException("Unable to create " + fh.getAbsolutePath());
+                throw new StorageException(
+                        "Unable to create "
+                                + fh.getAbsolutePath()
+                                + "\nUnable to create "
+                                + org.geowebcache.util.FileUtils.printFileTree(fh));
             }
         }
 
@@ -257,6 +266,7 @@ public class BlobStoreTest extends TestCase {
                 StorageBrokerTest.findTempDir() + File.separator + TEST_BLOB_DIR_NAME);
     }
 
+    @Test
     public void testLayerMetadata() throws Exception {
         fbs = setup();
 
@@ -264,17 +274,17 @@ public class BlobStoreTest extends TestCase {
         final String key1 = "Test.Metadata.Property_1";
         final String key2 = "Test.Metadata.Property_2";
 
-        assertNull(fbs.getLayerMetadata(layerName, key1));
-        assertNull(fbs.getLayerMetadata(layerName, key2));
+        Assert.assertNull(fbs.getLayerMetadata(layerName, key1));
+        Assert.assertNull(fbs.getLayerMetadata(layerName, key2));
 
         fbs.putLayerMetadata(layerName, key1, "value 1");
         fbs.putLayerMetadata(layerName, key2, "value 2");
-        assertEquals("value 1", fbs.getLayerMetadata(layerName, key1));
-        assertEquals("value 2", fbs.getLayerMetadata(layerName, key2));
+        Assert.assertEquals("value 1", fbs.getLayerMetadata(layerName, key1));
+        Assert.assertEquals("value 2", fbs.getLayerMetadata(layerName, key2));
 
         fbs.putLayerMetadata(layerName, key1, "value 1_1");
         fbs.putLayerMetadata(layerName, key2, null);
-        assertEquals("value 1_1", fbs.getLayerMetadata(layerName, key1));
-        assertNull(fbs.getLayerMetadata(layerName, key2));
+        Assert.assertEquals("value 1_1", fbs.getLayerMetadata(layerName, key1));
+        Assert.assertNull(fbs.getLayerMetadata(layerName, key2));
     }
 }

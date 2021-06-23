@@ -66,7 +66,7 @@ final class LayerCacheInfoBuilder {
         this.rootCacheDir = rootCacheDir;
         this.threadPool = threadPool;
         this.quotaUsageMonitor = quotaUsageMonitor;
-        this.perLayerRunningTasks = new HashMap<String, List<Future<ZoomLevelVisitor.Stats>>>();
+        this.perLayerRunningTasks = new HashMap<>();
     }
 
     /**
@@ -98,7 +98,7 @@ final class LayerCacheInfoBuilder {
             return;
         }
 
-        perLayerRunningTasks.put(layerName, new ArrayList<Future<ZoomLevelVisitor.Stats>>());
+        perLayerRunningTasks.put(layerName, new ArrayList<>());
 
         final Set<TileSet> onDiskTileSets = findOnDiskTileSets(tileLayer, layerDir);
 
@@ -111,8 +111,7 @@ final class LayerCacheInfoBuilder {
             final int zoomStop = gs.getZoomStop();
 
             for (int zoomLevel = zoomStart; zoomLevel <= zoomStop && !closed; zoomLevel++) {
-                String gridsetZLevelParamsDirName;
-                gridsetZLevelParamsDirName =
+                String gridsetZLevelParamsDirName =
                         FilePathUtils.gridsetZoomLevelDir(gridSetId, zoomLevel);
                 if (parametersId != null) {
                     gridsetZLevelParamsDirName += "_" + parametersId;
@@ -120,8 +119,7 @@ final class LayerCacheInfoBuilder {
                 final File gridsetZLevelDir = new File(layerDir, gridsetZLevelParamsDirName);
 
                 if (gridsetZLevelDir.exists()) {
-                    ZoomLevelVisitor cacheInfoBuilder;
-                    cacheInfoBuilder =
+                    ZoomLevelVisitor cacheInfoBuilder =
                             new ZoomLevelVisitor(
                                     layerName,
                                     gridsetZLevelDir,
@@ -130,8 +128,7 @@ final class LayerCacheInfoBuilder {
                                     parametersId,
                                     quotaUsageMonitor);
 
-                    Future<ZoomLevelVisitor.Stats> cacheTask;
-                    cacheTask = threadPool.submit(cacheInfoBuilder);
+                    Future<ZoomLevelVisitor.Stats> cacheTask = threadPool.submit(cacheInfoBuilder);
 
                     perLayerRunningTasks.get(layerName).add(cacheTask);
                     log.debug(
@@ -150,17 +147,15 @@ final class LayerCacheInfoBuilder {
 
         final String layerName = tileLayer.getName();
         final Set<String> griSetNames = tileLayer.getGridSubsets();
-        Set<TileSet> foundTileSets = new HashSet<TileSet>();
+        Set<TileSet> foundTileSets = new HashSet<>();
         for (String gridSetName : griSetNames) {
             final String gridSetDirPrefix = FilePathUtils.filteredGridSetId(gridSetName);
             FileFilter prefixFilter =
-                    new FileFilter() {
-                        public boolean accept(File pathname) {
-                            if (!pathname.isDirectory()) {
-                                return false;
-                            }
-                            return pathname.getName().startsWith(gridSetDirPrefix + "_");
+                    pathname -> {
+                        if (!pathname.isDirectory()) {
+                            return false;
                         }
+                        return pathname.getName().startsWith(gridSetDirPrefix + "_");
                     };
             File[] thisGridSetDirs = FileUtils.listFilesNullSafe(layerDir, prefixFilter);
             for (File directory : thisGridSetDirs) {
@@ -293,7 +288,7 @@ final class LayerCacheInfoBuilder {
             final long y = Long.valueOf(path.substring(1 + coordSepIdx, dotIdx));
 
             this.quotaUsageMonitor.tileStored(
-                    layerName, gridSetId, blobFormat, parametersId, x, y, (int) tileZ, length);
+                    layerName, gridSetId, blobFormat, parametersId, x, y, tileZ, length);
             stats.numTiles++;
             stats.collectedQuota.addBytes(length);
             return true;

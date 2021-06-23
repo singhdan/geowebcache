@@ -54,9 +54,7 @@ public class MetastoreRemover {
     public MetastoreRemover(DefaultStorageFinder finder) throws Exception {
         this.storageFinder = finder;
         File root = new File(storageFinder.getDefaultPath());
-        Connection conn = null;
-        try {
-            conn = getMetaStoreConnection(root);
+        try (Connection conn = getMetaStoreConnection(root)) {
             if (conn != null) {
                 log.info("Migrating the old metastore to filesystem storage");
                 SingleConnectionDataSource ds = new SingleConnectionDataSource(conn, false);
@@ -73,10 +71,6 @@ public class MetastoreRemover {
                 if (!defaultLocation) {
                     removeTiles(template);
                 }
-            }
-        } finally {
-            if (conn != null) {
-                conn.close();
             }
         }
 
@@ -180,7 +174,7 @@ public class MetastoreRemover {
                      */
                     private Map<String, String> toMap(String paramsKvp) {
                         // TODO: wondering, shall we URL decode the values??
-                        Map<String, String> result = new HashMap<String, String>();
+                        Map<String, String> result = new HashMap<>();
                         String[] kvps = paramsKvp.split("&");
                         for (String kvp : kvps) {
                             if (kvp != null && !"".equals(kvp)) {
@@ -321,11 +315,7 @@ public class MetastoreRemover {
     private String getDefaultJDBCURL(File root) {
         String path = root.getPath() + File.separator + "meta_jdbc_h2";
         String jdbcString =
-                "jdbc:h2:file:"
-                        + path
-                        + File.separator
-                        + "gwc_metastore"
-                        + ";TRACE_LEVEL_FILE=0;AUTO_SERVER=TRUE";
+                "jdbc:h2:file:" + path + File.separator + "gwc_metastore" + ";TRACE_LEVEL_FILE=0";
         return jdbcString;
     }
 }

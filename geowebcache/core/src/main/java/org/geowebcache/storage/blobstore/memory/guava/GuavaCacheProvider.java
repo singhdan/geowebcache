@@ -17,8 +17,6 @@ package org.geowebcache.storage.blobstore.memory.guava;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheStats;
-import com.google.common.cache.RemovalListener;
-import com.google.common.cache.RemovalNotification;
 import com.google.common.cache.Weigher;
 import java.util.Arrays;
 import java.util.Collections;
@@ -127,7 +125,7 @@ public class GuavaCacheProvider implements CacheProvider {
 
     public GuavaCacheProvider(CacheConfiguration config) {
         // Initialization of the Layer set and of the Atomic parameters
-        layers = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
+        layers = Collections.newSetFromMap(new ConcurrentHashMap<>());
         configured = new AtomicBoolean(false);
         actualOperations = new AtomicLong(0);
         configure(config);
@@ -152,13 +150,9 @@ public class GuavaCacheProvider implements CacheProvider {
         CacheBuilder<Object, Object> builder = CacheBuilder.newBuilder();
         // Add weigher
         Weigher<String, TileObject> weigher =
-                new Weigher<String, TileObject>() {
-
-                    @Override
-                    public int weigh(String key, TileObject value) {
-                        currentSize.addAndGet(value.getBlobSize());
-                        return value.getBlobSize();
-                    }
+                (key, value) -> {
+                    currentSize.addAndGet(value.getBlobSize());
+                    return value.getBlobSize();
                 };
         // Create the builder
         CacheBuilder<String, TileObject> newBuilder =
@@ -167,30 +161,25 @@ public class GuavaCacheProvider implements CacheProvider {
                         .weigher(weigher)
                         .concurrencyLevel(concurrency)
                         .removalListener(
-                                new RemovalListener<String, TileObject>() {
-
-                                    @Override
-                                    public void onRemoval(
-                                            RemovalNotification<String, TileObject> notification) {
-                                        // TODO This operation is not atomic
-                                        TileObject obj = notification.getValue();
-                                        // Update the current size
-                                        currentSize.addAndGet(-obj.getBlobSize());
-                                        final String tileKey = generateTileKey(obj);
-                                        final String layerName = obj.getLayerName();
-                                        multimap.removeTile(layerName, tileKey);
-                                        if (LOGGER.isDebugEnabled()) {
-                                            LOGGER.debug(
-                                                    "Removed tile "
-                                                            + tileKey
-                                                            + " for layer "
-                                                            + layerName
-                                                            + " due to reason:"
-                                                            + notification.getCause().toString());
-                                            LOGGER.debug(
-                                                    "Removed tile was evicted? "
-                                                            + notification.wasEvicted());
-                                        }
+                                notification -> {
+                                    // TODO This operation is not atomic
+                                    TileObject obj = notification.getValue();
+                                    // Update the current size
+                                    currentSize.addAndGet(-obj.getBlobSize());
+                                    final String tileKey = generateTileKey(obj);
+                                    final String layerName = obj.getLayerName();
+                                    multimap.removeTile(layerName, tileKey);
+                                    if (LOGGER.isDebugEnabled()) {
+                                        LOGGER.debug(
+                                                "Removed tile "
+                                                        + tileKey
+                                                        + " for layer "
+                                                        + layerName
+                                                        + " due to reason:"
+                                                        + notification.getCause().toString());
+                                        LOGGER.debug(
+                                                "Removed tile was evicted? "
+                                                        + notification.wasEvicted());
                                     }
                                 });
         // Handle eviction policy
@@ -223,22 +212,18 @@ public class GuavaCacheProvider implements CacheProvider {
                 LOGGER.debug("Configuring Scheduled Task for cache eviction");
             }
             Runnable command =
-                    new Runnable() {
-
-                        @Override
-                        public void run() {
-                            if (configured.get()) {
-                                // Increment the number of current operations
-                                // This behavior is used in order to wait
-                                // the end of all the operations after setting
-                                // the configured parameter to false
-                                actualOperations.incrementAndGet();
-                                try {
-                                    cache.cleanUp();
-                                } finally {
-                                    // Decrement the number of current operations.
-                                    actualOperations.decrementAndGet();
-                                }
+                    () -> {
+                        if (configured.get()) {
+                            // Increment the number of current operations
+                            // This behavior is used in order to wait
+                            // the end of all the operations after setting
+                            // the configured parameter to false
+                            actualOperations.incrementAndGet();
+                            try {
+                                cache.cleanUp();
+                            } finally {
+                                // Decrement the number of current operations.
+                                actualOperations.decrementAndGet();
                             }
                         }
                     };
@@ -637,8 +622,7 @@ public class GuavaCacheProvider implements CacheProvider {
         private final ReadLock readLock;
 
         /** MultiMap containing the {@link TileObject} keys for the Layers */
-        private final ConcurrentHashMap<String, Set<String>> layerMap =
-                new ConcurrentHashMap<String, Set<String>>();
+        private final ConcurrentHashMap<String, Set<String>> layerMap = new ConcurrentHashMap<>();
 
         public LayerMap() {
             // Lock initialization
@@ -677,7 +661,7 @@ public class GuavaCacheProvider implements CacheProvider {
                         }
                         // If no key is present then a new KeySet is created and then added to the
                         // multimap
-                        tileKeys = new ConcurrentSkipListSet<String>();
+                        tileKeys = new ConcurrentSkipListSet<>();
                         layerMap.put(layer, tileKeys);
                     }
                     // Downgrade by acquiring read lock before releasing write lock

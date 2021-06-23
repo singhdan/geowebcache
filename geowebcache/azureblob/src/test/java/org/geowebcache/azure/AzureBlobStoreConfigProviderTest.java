@@ -27,6 +27,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 public class AzureBlobStoreConfigProviderTest {
 
     @Before
+    @SuppressWarnings("PMD.CloseResource")
     public void setUp() throws Exception {
         System.setProperty("CONTAINER", "MYCONTAINER");
         System.setProperty("MYKEY", "99942777gfa+");
@@ -61,6 +62,6 @@ public class AzureBlobStoreConfigProviderTest {
         assertEquals("myname", abConfig.getAccountName());
         assertEquals("${MYKEY}", abConfig.getAccountKey());
         assertEquals("30", abConfig.getMaxConnections());
-        assertEquals(true, abConfig.isEnabled());
+        assertTrue(abConfig.isEnabled());
     }
 }

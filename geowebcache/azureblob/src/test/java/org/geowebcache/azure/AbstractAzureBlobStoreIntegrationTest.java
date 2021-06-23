@@ -19,10 +19,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.anyInt;
-import static org.mockito.Matchers.anyLong;
-import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -278,7 +278,6 @@ public abstract class AbstractAzureBlobStoreIntegrationTest {
 
         // check the tiles are gone too, give it up to 100 seconds
         long start = System.currentTimeMillis();
-        boolean allDeleted = false;
         boolean t20Deleted = false, t21Deleted = false, t22Deleted = false;
         while (System.currentTimeMillis() - start < 100000
                 && (!t20Deleted || !t21Deleted || !t22Deleted)) {
@@ -602,10 +601,6 @@ public abstract class AbstractAzureBlobStoreIntegrationTest {
                 }
             }
         }
-    }
-
-    private TileObject put(long x, long y, int z) throws StorageException {
-        return put(x, y, z, DEFAULT_GRIDSET, DEFAULT_FORMAT, null);
     }
 
     private TileObject put(

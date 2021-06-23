@@ -40,12 +40,12 @@ public class FileUtils {
                 files = listFilesNullSafe(path);
             }
 
-            for (int i = 0; i < files.length; i++) {
-                if (files[i].isDirectory()) {
-                    rmFileCacheDir(files[i], extfl);
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    rmFileCacheDir(file, extfl);
                 } else {
-                    if (!files[i].delete()) {
-                        log.error("Unable to delete " + files[i].getAbsolutePath());
+                    if (!file.delete()) {
+                        log.error("Unable to delete " + file.getAbsolutePath());
                     }
                 }
             }
@@ -85,17 +85,17 @@ public class FileUtils {
         // thousands of File objects as well as its String objects for the path name. Faster and
         // less resource intensive
         File[] files = listFilesNullSafe(path);
-        List<File> subDirectories = new ArrayList<File>();
+        List<File> subDirectories = new ArrayList<>();
 
         File file;
-        for (int i = 0; i < files.length; i++) {
-            file = files[i];
+        for (File value : files) {
+            file = value;
             if (file.isDirectory()) {
                 subDirectories.add(file);
             }
             filter.accept(file);
         }
-        if (subDirectories.size() > 0) {
+        if (!subDirectories.isEmpty()) {
             for (File subdir : subDirectories) {
                 boolean accepted = filter.accept(subdir);
                 if (accepted && subdir.isDirectory()) {
@@ -183,7 +183,7 @@ public class FileUtils {
     }
 
     private static void printFileTree_(StringBuilder sb, String prefix, File dir) {
-        File listFile[] = dir.listFiles();
+        File[] listFile = dir.listFiles();
         if (listFile != null) {
             for (int i = 0; i < listFile.length; i++) {
                 boolean last = i == listFile.length - 1;

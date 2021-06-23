@@ -21,7 +21,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.logging.Log;
@@ -30,10 +30,20 @@ import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.arcgis.compact.ArcGISCompactCache;
 import org.geowebcache.arcgis.compact.ArcGISCompactCacheV1;
 import org.geowebcache.arcgis.compact.ArcGISCompactCacheV2;
-import org.geowebcache.arcgis.config.*;
+import org.geowebcache.arcgis.config.CacheInfo;
+import org.geowebcache.arcgis.config.CacheInfoPersister;
+import org.geowebcache.arcgis.config.CacheStorageInfo;
+import org.geowebcache.arcgis.config.LODInfo;
+import org.geowebcache.arcgis.config.TileCacheInfo;
 import org.geowebcache.conveyor.Conveyor.CacheResult;
 import org.geowebcache.conveyor.ConveyorTile;
-import org.geowebcache.grid.*;
+import org.geowebcache.grid.BoundingBox;
+import org.geowebcache.grid.Grid;
+import org.geowebcache.grid.GridSet;
+import org.geowebcache.grid.GridSetBroker;
+import org.geowebcache.grid.GridSubset;
+import org.geowebcache.grid.GridSubsetFactory;
+import org.geowebcache.grid.OutsideCoverageException;
 import org.geowebcache.io.FileResource;
 import org.geowebcache.io.Resource;
 import org.geowebcache.layer.AbstractTileLayer;
@@ -225,7 +235,7 @@ public class ArcGISCacheLayer extends AbstractTileLayer {
         return Collections.singletonList(format);
     }
 
-    private Hashtable<String, GridSubset> createGridSubsets(final GridSetBroker gridSetBroker) {
+    private HashMap<String, GridSubset> createGridSubsets(final GridSetBroker gridSetBroker) {
 
         final CacheInfo info = this.cacheInfo;
         final TileCacheInfo tileCacheInfo = info.getTileCacheInfo();
@@ -243,7 +253,7 @@ public class ArcGISCacheLayer extends AbstractTileLayer {
         GridSubset subSet =
                 GridSubsetFactory.createGridSubSet(gridSet, this.layerBounds, zoomStart, zoomStop);
 
-        Hashtable<String, GridSubset> subsets = new Hashtable<String, GridSubset>();
+        HashMap<String, GridSubset> subsets = new HashMap<>();
         subsets.put(gridSet.getName(), subSet);
         return subsets;
     }
@@ -252,7 +262,7 @@ public class ArcGISCacheLayer extends AbstractTileLayer {
             final GridSetBroker gridSetBroker) {
         List<? extends ArcGISCacheGridsetConfiguration> configs =
                 gridSetBroker.getConfigurations(ArcGISCacheGridsetConfiguration.class);
-        if (configs.size() == 0) {
+        if (configs.isEmpty()) {
             throw new IllegalStateException("No ArcGISCacheGridsetConfiguration could be found");
         } else {
             if (configs.size() > 1) {

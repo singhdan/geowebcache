@@ -22,13 +22,11 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -149,17 +147,11 @@ public class JDBCQuotaStore implements QuotaStore {
                         List<String> existingLayers =
                                 jt.query(
                                         dialect.getAllLayersQuery(schema),
-                                        new RowMapper<String>() {
-
-                                            public String mapRow(ResultSet rs, int rowNum)
-                                                    throws SQLException {
-                                                return rs.getString(1);
-                                            }
-                                        });
+                                        (rs, rowNum) -> rs.getString(1));
 
                         // compare with the ones available in the config
                         final Set<String> layerNames = calculator.getLayerNames();
-                        final Set<String> layersToDelete = new HashSet<String>(existingLayers);
+                        final Set<String> layersToDelete = new HashSet<>(existingLayers);
                         layersToDelete.removeAll(layerNames);
 
                         // remove all the layers we don't need
@@ -257,14 +249,11 @@ public class JDBCQuotaStore implements QuotaStore {
         String sql = dialect.getUsedQuotaByTileSetId(schema, "key");
         return jt.queryForOptionalObject(
                 sql,
-                new RowMapper<Quota>() {
-
-                    public Quota mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        BigDecimal bytes = rs.getBigDecimal(1);
-                        Quota quota = new Quota(bytes.toBigInteger());
-                        quota.setTileSetId(tileSetId);
-                        return quota;
-                    }
+                (rs, rowNum) -> {
+                    BigDecimal bytes = rs.getBigDecimal(1);
+                    Quota quota = new Quota(bytes.toBigInteger());
+                    quota.setTileSetId(tileSetId);
+                    return quota;
                 },
                 Collections.singletonMap("key", tileSetId));
     }
@@ -312,7 +301,7 @@ public class JDBCQuotaStore implements QuotaStore {
                         String statement =
                                 dialect.getLayerGridDeletionStatement(
                                         schema, "layerName", "gridSetId");
-                        params = new HashMap<String, Object>();
+                        params = new HashMap<>();
                         params.put("layerName", layerName);
                         params.put("gridSetId", gridSetId);
                         jt.update(statement, params);
@@ -332,7 +321,7 @@ public class JDBCQuotaStore implements QuotaStore {
                         quota.setBytes(quota.getBytes().negate());
                         String updateQuota =
                                 dialect.getUpdateQuotaStatement(schema, "tileSetId", "bytes");
-                        Map<String, Object> params = new HashMap<String, Object>();
+                        Map<String, Object> params = new HashMap<>();
                         params.put("tileSetId", GLOBAL_QUOTA_NAME);
                         params.put("bytes", new BigDecimal(quota.getBytes()));
                         jt.update(updateQuota, params);
@@ -353,7 +342,7 @@ public class JDBCQuotaStore implements QuotaStore {
                     @Override
                     protected void doInTransactionWithoutResult(TransactionStatus status) {
                         String sql = dialect.getRenameLayerStatement(schema, "oldName", "newName");
-                        Map<String, Object> params = new HashMap<String, Object>();
+                        Map<String, Object> params = new HashMap<>();
                         params.put("oldName", oldLayerName);
                         params.put("newName", newLayerName);
                         int updated = jt.update(sql, params);
@@ -367,7 +356,7 @@ public class JDBCQuotaStore implements QuotaStore {
         List<TileSet> tilesets = jt.query(getTileSet, new TileSetRowMapper());
 
         // collect in a set and remove the global quota one
-        Set<TileSet> result = new HashSet<TileSet>();
+        Set<TileSet> result = new HashSet<>();
         for (TileSet ts : tilesets) {
             if (!GLOBAL_QUOTA_NAME.equals(ts.getId())) {
                 result.add(ts);
@@ -416,7 +405,7 @@ public class JDBCQuotaStore implements QuotaStore {
         String createTileSet =
                 dialect.getCreateTileSetQuery(
                         schema, "key", "layerName", "gridSetId", "blobFormat", "parametersId");
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("key", tset.getId());
         params.put("layerName", tset.getLayerName());
         params.put("gridSetId", tset.getGridsetId());
@@ -493,7 +482,7 @@ public class JDBCQuotaStore implements QuotaStore {
 
                         String updateQuota =
                                 dialect.getUpdateQuotaStatement(schema, "tileSetId", "bytes");
-                        Map<String, Object> params = new HashMap<String, Object>();
+                        Map<String, Object> params = new HashMap<>();
                         params.put("tileSetId", tileSet.getId());
                         params.put("bytes", new BigDecimal(quotaDiff.getBytes()));
                         jt.update(updateQuota, params);
@@ -568,16 +557,13 @@ public class JDBCQuotaStore implements QuotaStore {
 
     /** Sorts the payloads by page key */
     protected List<PageStatsPayload> sortPayloads(Collection<PageStatsPayload> tileCountDiffs) {
-        List<PageStatsPayload> result = new ArrayList<PageStatsPayload>(tileCountDiffs);
+        List<PageStatsPayload> result = new ArrayList<>(tileCountDiffs);
         Collections.sort(
                 result,
-                new Comparator<PageStatsPayload>() {
-
-                    public int compare(PageStatsPayload pl1, PageStatsPayload pl2) {
-                        TilePage p1 = pl1.getPage();
-                        TilePage p2 = pl2.getPage();
-                        return p1.getKey().compareTo(p2.getKey());
-                    }
+                (pl1, pl2) -> {
+                    TilePage p1 = pl1.getPage();
+                    TilePage p2 = pl2.getPage();
+                    return p1.getKey().compareTo(p2.getKey());
                 });
         return result;
     }
@@ -596,7 +582,7 @@ public class JDBCQuotaStore implements QuotaStore {
         String update =
                 dialect.conditionalUpdatePageStatsFillFactor(
                         schema, "key", "fillFactor", "oldFillFactor");
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("key", page.getKey());
         params.put("fillFactor", stats.getFillFactor());
         params.put("oldFillFactor", oldFillFactor);
@@ -609,7 +595,7 @@ public class JDBCQuotaStore implements QuotaStore {
         }
 
         String update = dialect.updatePageStatsFillFactor(schema, "key", "fillFactor");
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("key", page.getKey());
         params.put("fillFactor", stats.getFillFactor());
         return jt.update(update, params);
@@ -634,7 +620,7 @@ public class JDBCQuotaStore implements QuotaStore {
                         "lastAccessTime",
                         "fillFactor",
                         "numHits");
-        Map<String, Object> params = new HashMap<String, Object>();
+        Map<String, Object> params = new HashMap<>();
         params.put("key", page.getKey());
         params.put("tileSetId", page.getTileSetId());
         params.put("pageZ", page.getZoomLevel());
@@ -655,18 +641,15 @@ public class JDBCQuotaStore implements QuotaStore {
         String getPageStats = dialect.getPageStats(schema, "key");
         return jt.queryForOptionalObject(
                 getPageStats,
-                new RowMapper<PageStats>() {
+                (rs, rowNum) -> {
+                    PageStats ps = new PageStats(0);
+                    // FREQUENCY_OF_USE, LAST_ACCESS_TIME, FILL_FACTOR, NUM_HITS FROM
+                    ps.setFrequencyOfUsePerMinute(rs.getFloat(1));
+                    ps.setLastAccessMinutes(rs.getInt(2));
+                    ps.setFillFactor(rs.getFloat(3));
+                    ps.setNumHits(rs.getBigDecimal(4).toBigInteger());
 
-                    public PageStats mapRow(ResultSet rs, int rowNum) throws SQLException {
-                        PageStats ps = new PageStats(0);
-                        // FREQUENCY_OF_USE, LAST_ACCESS_TIME, FILL_FACTOR, NUM_HITS FROM
-                        ps.setFrequencyOfUsePerMinute(rs.getFloat(1));
-                        ps.setLastAccessMinutes(rs.getInt(2));
-                        ps.setFillFactor(rs.getFloat(3));
-                        ps.setNumHits(rs.getBigDecimal(4).toBigInteger());
-
-                        return ps;
-                    }
+                    return ps;
                 },
                 Collections.singletonMap("key", pageStatsKey));
     }
@@ -675,16 +658,14 @@ public class JDBCQuotaStore implements QuotaStore {
     public Future<List<PageStats>> addHitsAndSetAccesTime(
             final Collection<PageStatsPayload> statsUpdates) {
         return executor.submit(
-                new Callable<List<PageStats>>() {
-
-                    public List<PageStats> call() throws Exception {
-                        return (List<PageStats>)
+                () ->
+                        (List<PageStats>)
                                 tt.execute(
                                         new TransactionCallback<Object>() {
 
                                             public Object doInTransaction(
                                                     TransactionStatus status) {
-                                                List<PageStats> result = new ArrayList<PageStats>();
+                                                List<PageStats> result = new ArrayList<>();
                                                 if (statsUpdates != null) {
                                                     // sort the payloads by page id as a deadlock
                                                     // avoidance measure, out
@@ -771,7 +752,7 @@ public class JDBCQuotaStore implements QuotaStore {
                                                                             "newAccessTime",
                                                                             "oldAccessTime");
                                                             Map<String, Object> params =
-                                                                    new HashMap<String, Object>();
+                                                                    new HashMap<>();
                                                             params.put("key", page.getKey());
                                                             params.put(
                                                                     "newHits",
@@ -838,9 +819,7 @@ public class JDBCQuotaStore implements QuotaStore {
                                                         lastAccessTimeMinutes,
                                                         creationTimeMinutes);
                                             }
-                                        });
-                    }
-                });
+                                        }));
     }
 
     public long[][] getTilesForPage(TilePage page) throws InterruptedException {
@@ -858,8 +837,8 @@ public class JDBCQuotaStore implements QuotaStore {
     }
 
     private TilePage getSinglePage(Set<String> layerNames, boolean leastFrequentlyUsed) {
-        Map<String, Object> params = new HashMap<String, Object>();
-        List<String> layerParamNames = new ArrayList<String>();
+        Map<String, Object> params = new HashMap<>();
+        List<String> layerParamNames = new ArrayList<>();
         int i = 0;
         for (String layer : layerNames) {
             i++;
@@ -880,29 +859,27 @@ public class JDBCQuotaStore implements QuotaStore {
     public PageStats setTruncated(final TilePage page) throws InterruptedException {
         return (PageStats)
                 tt.execute(
-                        new TransactionCallback<Object>() {
-
-                            public Object doInTransaction(TransactionStatus status) {
-                                if (log.isDebugEnabled()) {
-                                    log.info("Truncating page " + page);
-                                }
-
-                                PageStats stats = getPageStats(page.getKey());
-                                if (stats != null) {
-                                    stats.setFillFactor(0);
-
-                                    // update the record in the db
-                                    int modified = setPageFillFactor(page, stats);
-                                    // if no record updated the page has been deleted by another
-                                    // instance
-                                    if (modified == 0) {
-                                        return null;
+                        (TransactionCallback<Object>)
+                                status -> {
+                                    if (log.isDebugEnabled()) {
+                                        log.info("Truncating page " + page);
                                     }
-                                }
 
-                                return stats;
-                            }
-                        });
+                                    PageStats stats = getPageStats(page.getKey());
+                                    if (stats != null) {
+                                        stats.setFillFactor(0);
+
+                                        // update the record in the db
+                                        int modified = setPageFillFactor(page, stats);
+                                        // if no record updated the page has been deleted by another
+                                        // instance
+                                        if (modified == 0) {
+                                            return null;
+                                        }
+                                    }
+
+                                    return stats;
+                                });
     }
 
     public void close() throws Exception {
@@ -987,7 +964,7 @@ public class JDBCQuotaStore implements QuotaStore {
                         quota.setBytes(quota.getBytes().negate());
                         String updateQuota =
                                 dialect.getUpdateQuotaStatement(schema, "tileSetId", "bytes");
-                        Map<String, Object> params = new HashMap<String, Object>();
+                        Map<String, Object> params = new HashMap<>();
                         params.put("tileSetId", GLOBAL_QUOTA_NAME);
                         params.put("bytes", new BigDecimal(quota.getBytes()));
                         jt.update(updateQuota, params);
@@ -996,7 +973,7 @@ public class JDBCQuotaStore implements QuotaStore {
                         String statement =
                                 dialect.getLayerParametersDeletionStatement(
                                         schema, "layerName", "parametersId");
-                        params = new HashMap<String, Object>();
+                        params = new HashMap<>();
                         params.put("layerName", layerName);
                         params.put("parametersId", parametersId);
                         jt.update(statement, params);

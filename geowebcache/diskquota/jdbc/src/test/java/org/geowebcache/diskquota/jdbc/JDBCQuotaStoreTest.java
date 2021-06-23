@@ -1,6 +1,7 @@
 package org.geowebcache.diskquota.jdbc;
 
 import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -11,7 +12,6 @@ import static org.junit.Assert.fail;
 import com.google.common.base.Objects;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -22,7 +22,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,7 +43,6 @@ import org.geowebcache.config.TileLayerConfiguration;
 import org.geowebcache.config.XMLConfiguration;
 import org.geowebcache.config.XMLConfigurationBackwardsCompatibilityTest;
 import org.geowebcache.diskquota.DiskQuotaMonitor;
-import org.geowebcache.diskquota.QuotaStore;
 import org.geowebcache.diskquota.storage.PageStats;
 import org.geowebcache.diskquota.storage.PageStatsPayload;
 import org.geowebcache.diskquota.storage.Quota;
@@ -53,7 +51,6 @@ import org.geowebcache.diskquota.storage.SystemUtils;
 import org.geowebcache.diskquota.storage.TilePage;
 import org.geowebcache.diskquota.storage.TilePageCalculator;
 import org.geowebcache.diskquota.storage.TileSet;
-import org.geowebcache.diskquota.storage.TileSetVisitor;
 import org.geowebcache.filter.parameters.ParametersUtils;
 import org.geowebcache.grid.GridSetBroker;
 import org.geowebcache.layer.TileLayerDispatcher;
@@ -100,8 +97,6 @@ public abstract class JDBCQuotaStoreTest {
             EasyMock.replay(cacheDirFinder);
 
             XMLConfiguration xmlConfig = loadXMLConfig();
-            LinkedList<TileLayerConfiguration> configList =
-                    new LinkedList<TileLayerConfiguration>();
             extensions.addBean(
                     "xmlConfig",
                     xmlConfig,
@@ -312,19 +307,13 @@ public abstract class JDBCQuotaStoreTest {
     private String[] paramIds;
 
     private XMLConfiguration loadXMLConfig() throws Exception {
-        InputStream is = null;
-        XMLConfiguration xmlConfig = null;
-
-        xmlConfig =
-                new XMLConfiguration(
-                        null,
-                        new MockConfigurationResourceProvider(
-                                () ->
-                                        XMLConfiguration.class.getResourceAsStream(
-                                                XMLConfigurationBackwardsCompatibilityTest
-                                                        .LATEST_FILENAME)));
-
-        return xmlConfig;
+        return new XMLConfiguration(
+                null,
+                new MockConfigurationResourceProvider(
+                        () ->
+                                XMLConfiguration.class.getResourceAsStream(
+                                        XMLConfigurationBackwardsCompatibilityTest
+                                                .LATEST_FILENAME)));
     }
 
     @Test
@@ -471,7 +460,7 @@ public abstract class JDBCQuotaStoreTest {
         Quota newTset4Quota = store.getUsedQuotaByTileSetId(tset4.getId());
         // validate test quota 1
         assertNotNull(newTset1Quota);
-        assertEquals(new BigInteger("0"), newTset1Quota.getBytes());
+        assertEquals(BigInteger.valueOf(0), newTset1Quota.getBytes());
         // validate test quota 2
         assertNotNull(newTset2Quota);
         assertEquals(tset2Quota.getBytes(), newTset2Quota.getBytes());
@@ -480,7 +469,7 @@ public abstract class JDBCQuotaStoreTest {
         assertEquals(tset3Quota.getBytes(), newTset3Quota.getBytes());
         // validate test quota 4
         assertNotNull(newTset4Quota);
-        assertEquals(new BigInteger("0"), newTset4Quota.getBytes());
+        assertEquals(BigInteger.valueOf(0), newTset4Quota.getBytes());
         // test the global quota
         globalQuota = store.getGloballyUsedQuota();
         assertEquals(tset2Quota.getBytes().add(tset3Quota.getBytes()), globalQuota.getBytes());
@@ -529,7 +518,7 @@ public abstract class JDBCQuotaStoreTest {
         tset2Quota = store.getUsedQuotaByTileSetId(tset2.getId());
 
         assertNotNull(tset2Quota);
-        assertEquals(new BigInteger("0"), tset2Quota.getBytes());
+        assertEquals(BigInteger.valueOf(0), tset2Quota.getBytes());
         globalQuota = store.getGloballyUsedQuota();
         assertEquals(tset1Quota.getBytes(), globalQuota.getBytes());
     }
@@ -580,14 +569,8 @@ public abstract class JDBCQuotaStoreTest {
     @Test
     public void testVisitor() throws Exception {
         Set<TileSet> tileSets1 = store.getTileSets();
-        final Set<TileSet> tileSets2 = new HashSet<TileSet>();
-        store.accept(
-                new TileSetVisitor() {
-
-                    public void visit(TileSet tileSet, QuotaStore quotaStore) {
-                        tileSets2.add(tileSet);
-                    }
-                });
+        final Set<TileSet> tileSets2 = new HashSet<>();
+        store.accept((tileSet, quotaStore) -> tileSets2.add(tileSet));
         assertEquals(tileSets1, tileSets2);
     }
 
@@ -609,8 +592,7 @@ public abstract class JDBCQuotaStoreTest {
     @Test
     public void testGetUsedQuotaByLayerName() throws Exception {
         String layerName = "topp:states2";
-        List<TileSet> tileSets;
-        tileSets = new ArrayList<TileSet>(tilePageCalculator.getTileSetsFor(layerName));
+        List<TileSet> tileSets = new ArrayList<>(tilePageCalculator.getTileSetsFor(layerName));
 
         Quota expected = new Quota();
         for (TileSet tset : tileSets) {
@@ -627,10 +609,9 @@ public abstract class JDBCQuotaStoreTest {
     @Test
     public void testGetUsedQuotaByTileSetId() throws Exception {
         String layerName = "topp:states2";
-        List<TileSet> tileSets;
-        tileSets = new ArrayList<TileSet>(tilePageCalculator.getTileSetsFor(layerName));
+        List<TileSet> tileSets = new ArrayList<>(tilePageCalculator.getTileSetsFor(layerName));
 
-        Map<String, Quota> expectedById = new HashMap<String, Quota>();
+        Map<String, Quota> expectedById = new HashMap<>();
 
         for (TileSet tset : tileSets) {
             Quota quotaDiff = new Quota(10D * Math.random(), StorageUnit.MiB);
@@ -769,8 +750,7 @@ public abstract class JDBCQuotaStoreTest {
         final String layerName = testTileSet.getLayerName();
         Set<String> layerNames = Collections.singleton(layerName);
 
-        TilePage lfuPage;
-        lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
+        TilePage lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
         assertNull(lfuPage);
 
         TilePage page1 = new TilePage(testTileSet.getId(), 0, 1, 2);
@@ -799,8 +779,7 @@ public abstract class JDBCQuotaStoreTest {
         final String layerName = testTileSet.getLayerName();
         Set<String> layerNames = Collections.singleton(layerName);
 
-        TilePage lfuPage;
-        lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
+        TilePage lfuPage = store.getLeastFrequentlyUsedPage(layerNames);
         assertNull(lfuPage);
 
         TilePage page1 = new TilePage(testTileSet.getId(), 0, 1, 2);
@@ -833,8 +812,7 @@ public abstract class JDBCQuotaStoreTest {
         final String layerName = testTileSet.getLayerName();
         Set<String> layerNames = Collections.singleton(layerName);
 
-        TilePage leastRecentlyUsedPage;
-        leastRecentlyUsedPage = store.getLeastRecentlyUsedPage(layerNames);
+        TilePage leastRecentlyUsedPage = store.getLeastRecentlyUsedPage(layerNames);
         assertNull(leastRecentlyUsedPage);
 
         TilePage page1 = new TilePage(testTileSet.getId(), 0, 1, 2);
@@ -869,8 +847,7 @@ public abstract class JDBCQuotaStoreTest {
         final String layerName = testTileSet.getLayerName();
         Set<String> layerNames = Collections.singleton(layerName);
 
-        TilePage leastRecentlyUsedPage;
-        leastRecentlyUsedPage = store.getLeastRecentlyUsedPage(layerNames);
+        TilePage leastRecentlyUsedPage = store.getLeastRecentlyUsedPage(layerNames);
         assertNull(leastRecentlyUsedPage);
 
         TilePage page1 = new TilePage(testTileSet.getId(), 0, 1, 2);
@@ -902,14 +879,14 @@ public abstract class JDBCQuotaStoreTest {
         long[][] expected = tilePageCalculator.toGridCoverage(testTileSet, page);
         long[][] tilesForPage = store.getTilesForPage(page);
 
-        assertTrue(Arrays.equals(expected[0], tilesForPage[0]));
+        assertArrayEquals(expected[0], tilesForPage[0]);
 
         page = new TilePage(testTileSet.getId(), 0, 0, 1);
 
         expected = tilePageCalculator.toGridCoverage(testTileSet, page);
         tilesForPage = store.getTilesForPage(page);
 
-        assertTrue(Arrays.equals(expected[1], tilesForPage[1]));
+        assertArrayEquals(expected[1], tilesForPage[1]);
     }
 
     private int countTileSetsByLayerName(String layerName) {

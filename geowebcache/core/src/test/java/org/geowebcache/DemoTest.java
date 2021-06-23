@@ -1,6 +1,7 @@
 package org.geowebcache;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -32,7 +33,7 @@ public class DemoTest {
         servReq.setRequestURI("/test");
 
         // Creating an advertised Layer and an unadvertised one
-        HashMap<String, GridSubset> subSets = new HashMap<String, GridSubset>();
+        HashMap<String, GridSubset> subSets = new HashMap<>();
         TileLayer advertisedLayer =
                 new WMSLayer(
                         "testAdv", null, null, null, null, subSets, null, null, null, false, null);
@@ -55,7 +56,7 @@ public class DemoTest {
         unAdvertisedLayer.setAdvertised(false);
 
         // Define used method
-        TreeSet<String> set = new TreeSet<String>();
+        TreeSet<String> set = new TreeSet<>();
         set.add(advertisedLayer.getName());
         set.add(unAdvertisedLayer.getName());
 

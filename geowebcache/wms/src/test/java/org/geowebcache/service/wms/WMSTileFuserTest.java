@@ -14,11 +14,8 @@
  */
 package org.geowebcache.service.wms;
 
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Matchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 
@@ -27,13 +24,13 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Hashtable;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import org.geowebcache.GeoWebCacheException;
 import org.geowebcache.config.DefaultGridsets;
+import org.geowebcache.conveyor.ConveyorTile;
 import org.geowebcache.filter.security.SecurityDispatcher;
 import org.geowebcache.grid.BoundingBox;
 import org.geowebcache.grid.GridSetBroker;
@@ -52,10 +49,10 @@ import org.geowebcache.storage.StorageException;
 import org.geowebcache.storage.TileObject;
 import org.geowebcache.storage.TransientCache;
 import org.geowebcache.storage.blobstore.file.FileBlobStore;
-import org.hamcrest.Matchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mockito;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -166,7 +163,7 @@ public class WMSTileFuserTest {
         Mockito.when(tld.getTileLayer("test:layer")).thenReturn(layer);
         StorageBroker sb = mock(StorageBroker.class);
 
-        Mockito.when(sb.get(argThat(Matchers.instanceOf(TileObject.class))))
+        Mockito.when(sb.get(ArgumentMatchers.any(TileObject.class)))
                 .thenAnswer(
                         invoc -> {
                             TileObject stObj = (TileObject) invoc.getArguments()[0];
@@ -179,19 +176,19 @@ public class WMSTileFuserTest {
                         });
         WMSTileFuser tileFuser =
                 new WMSTileFuser(tld, sb, fuserRequest(layer, gridSubset, bounds, width, height));
-        ClassPathXmlApplicationContext context =
-                new ClassPathXmlApplicationContext("appContextTest.xml");
-        tileFuser.setApplicationContext(context);
+        try (ClassPathXmlApplicationContext context =
+                new ClassPathXmlApplicationContext("appContextTest.xml")) {
+            tileFuser.setApplicationContext(context);
 
-        tileFuser.setSecurityDispatcher(secDisp);
-        MockHttpServletResponse response = new MockHttpServletResponse();
-        RuntimeStats stats = mock(RuntimeStats.class);
+            tileFuser.setSecurityDispatcher(secDisp);
+            MockHttpServletResponse response = new MockHttpServletResponse();
+            RuntimeStats stats = mock(RuntimeStats.class);
 
-        tileFuser.writeResponse(response, stats);
+            tileFuser.writeResponse(response, stats);
 
-        Mockito.verify(secDisp, times(4))
-                .checkSecurity(
-                        Mockito.argThat(hasProperty("tileLayer", notNullValue(TileLayer.class))));
+            Mockito.verify(secDisp, times(4))
+                    .checkSecurity(ArgumentMatchers.any(ConveyorTile.class));
+        }
     }
 
     @Test
@@ -301,15 +298,16 @@ public class WMSTileFuserTest {
             tileFuser.setSecurityDispatcher(secDisp);
 
             // Selection of the ApplicationContext associated
-            ClassPathXmlApplicationContext context =
-                    new ClassPathXmlApplicationContext("appContextTest.xml");
-            tileFuser.setApplicationContext(context);
-            MockHttpServletResponse response = new MockHttpServletResponse();
+            try (ClassPathXmlApplicationContext context =
+                    new ClassPathXmlApplicationContext("appContextTest.xml")) {
+                tileFuser.setApplicationContext(context);
+                MockHttpServletResponse response = new MockHttpServletResponse();
 
-            tileFuser.writeResponse(
-                    response, new RuntimeStats(1, Arrays.asList(1), Arrays.asList("desc")));
+                tileFuser.writeResponse(
+                        response, new RuntimeStats(1, Arrays.asList(1), Arrays.asList("desc")));
 
-            assertTrue(response.getContentAsString().length() > 0);
+                assertTrue(response.getContentAsString().length() > 0);
+            }
         } finally {
             temp.delete();
         }
@@ -317,10 +315,10 @@ public class WMSTileFuserTest {
 
     private WMSLayer createWMSLayer() {
         String[] urls = {"http://localhost:38080/wms"};
-        List<String> formatList = new LinkedList<String>();
+        List<String> formatList = new LinkedList<>();
         formatList.add("image/png");
 
-        Hashtable<String, GridSubset> grids = new Hashtable<String, GridSubset>();
+        Map<String, GridSubset> grids = new HashMap<>();
 
         GridSubset grid =
                 GridSubsetFactory.createGridSubSet(

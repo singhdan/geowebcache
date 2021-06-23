@@ -10,7 +10,11 @@ import org.geowebcache.config.MockGridSetConfiguration;
 import org.geowebcache.config.TileLayerConfiguration;
 import org.geowebcache.config.XMLConfiguration;
 import org.geowebcache.config.XMLConfigurationBackwardsCompatibilityTest;
-import org.geowebcache.grid.*;
+import org.geowebcache.grid.BoundingBox;
+import org.geowebcache.grid.GridSet;
+import org.geowebcache.grid.GridSetBroker;
+import org.geowebcache.grid.GridSetFactory;
+import org.geowebcache.grid.SRS;
 import org.geowebcache.layer.TileLayerDispatcher;
 import org.geowebcache.rest.controller.FilterUpdateController;
 import org.junit.Before;
@@ -57,7 +61,7 @@ public class FilterUpdateControllerTest {
         XMLConfiguration xmlConfig = loadXMLConfig();
         xmlConfig.setGridSetBroker(gridSetBroker);
         xmlConfig.afterPropertiesSet();
-        LinkedList<TileLayerConfiguration> configList = new LinkedList<TileLayerConfiguration>();
+        LinkedList<TileLayerConfiguration> configList = new LinkedList<>();
         configList.add(xmlConfig);
 
         tld = new TileLayerDispatcher(gridSetBroker, configList);

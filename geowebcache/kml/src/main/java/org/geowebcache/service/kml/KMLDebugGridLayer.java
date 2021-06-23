@@ -16,7 +16,7 @@ package org.geowebcache.service.kml;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 import org.geowebcache.GeoWebCacheException;
@@ -24,7 +24,6 @@ import org.geowebcache.config.DefaultGridsets;
 import org.geowebcache.conveyor.ConveyorTile;
 import org.geowebcache.grid.BoundingBox;
 import org.geowebcache.grid.GridSetBroker;
-import org.geowebcache.grid.GridSubset;
 import org.geowebcache.grid.GridSubsetFactory;
 import org.geowebcache.grid.SRS;
 import org.geowebcache.io.ByteArrayResource;
@@ -51,7 +50,7 @@ public class KMLDebugGridLayer extends AbstractTileLayer {
     private static KMLDebugGridLayer instance;
 
     private KMLDebugGridLayer() {
-        super.subSets = new Hashtable<String, GridSubset>();
+        super.subSets = new HashMap<>();
         subSets.put(
                 gridSetBroker.getWorldEpsg4326().getName(),
                 GridSubsetFactory.createGridSubSet(

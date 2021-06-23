@@ -24,8 +24,10 @@ import static org.geowebcache.seed.TileBreeder.TOTAL_FAILURES_BEFORE_ABORTING_DE
 import static org.geowebcache.seed.TileBreeder.createTileRange;
 
 import java.text.NumberFormat;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
@@ -85,8 +87,8 @@ public class FormService {
                     HttpStatus.BAD_REQUEST);
         }
 
-        List<GWCTask> terminatedTasks = new LinkedList<GWCTask>();
-        List<GWCTask> nonTerminatedTasks = new LinkedList<GWCTask>();
+        List<GWCTask> terminatedTasks = new LinkedList<>();
+        List<GWCTask> nonTerminatedTasks = new LinkedList<>();
         while (tasks.hasNext()) {
             GWCTask task = tasks.next();
             String layerName = task.getLayerName();
@@ -176,7 +178,7 @@ public class FormService {
             return handleDoSeedPost(params, tl);
         }
 
-        return new ResponseEntity<Object>(HttpStatus.BAD_REQUEST);
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
     private ResponseEntity<?> handleDoSeedPost(Map<String, String> form, TileLayer tl)
@@ -204,7 +206,7 @@ public class FormService {
         String format = form.get("tileFormat");
         Map<String, String> fullParameters;
         {
-            Map<String, String> parameters = new HashMap<String, String>();
+            Map<String, String> parameters = new HashMap<>();
             Set<String> paramNames = form.keySet();
             String prefix = "parameter_";
             for (String name : paramNames) {
@@ -300,11 +302,10 @@ public class FormService {
     }
 
     private ResponseEntity<?> handleDoGet(TileLayer tl, boolean listAllTasks) {
-        return new ResponseEntity<String>(
-                makeFormPage(tl, listAllTasks), getHeaders(), HttpStatus.OK);
+        return new ResponseEntity<>(makeFormPage(tl, listAllTasks), getHeaders(), HttpStatus.OK);
     }
 
-    private String makeFormPage(TileLayer tl, boolean listAllTasks) {
+    protected String makeFormPage(TileLayer tl, boolean listAllTasks) {
 
         StringBuilder doc = new StringBuilder();
 
@@ -345,7 +346,7 @@ public class FormService {
 
     private void makeModifiableParameters(StringBuilder doc, TileLayer tl) {
         List<ParameterFilter> parameterFilters = tl.getParameterFilters();
-        if (parameterFilters == null || parameterFilters.size() == 0) {
+        if (parameterFilters == null || parameterFilters.isEmpty()) {
             return;
         }
         doc.append("<tr><td>Modifiable Parameters:</td><td>\n");
@@ -392,7 +393,7 @@ public class FormService {
     }
 
     private Map<String, String> makeParametersMap(String defaultValue, List<String> legalValues) {
-        Map<String, String> map = new TreeMap<String, String>();
+        Map<String, String> map = new TreeMap<>();
         for (String s : legalValues) {
             map.put(s, s);
         }
@@ -421,7 +422,7 @@ public class FormService {
 
     private void makeTypePullDown(StringBuilder doc) {
         doc.append("<tr><td>Type of operation:</td><td>\n");
-        Map<String, String> keysValues = new TreeMap<String, String>();
+        Map<String, String> keysValues = new TreeMap<>();
 
         keysValues.put("Truncate - remove tiles", "truncate");
         keysValues.put("Seed - generate missing tiles", "seed");
@@ -433,7 +434,7 @@ public class FormService {
 
     private void makeThreadCountPullDown(StringBuilder doc) {
         doc.append("<tr><td>Number of tasks to use:</td><td>\n");
-        Map<String, String> keysValues = new TreeMap<String, String>();
+        Map<String, String> keysValues = new LinkedHashMap<>();
 
         for (int i = 1; i < 129; i++) {
             if (i < 10) {
@@ -525,7 +526,7 @@ public class FormService {
     }
 
     private void makeZoomPullDown(StringBuilder doc, boolean isStart, TileLayer tl) {
-        Map<String, String> keysValues = new TreeMap<String, String>();
+        Map<String, String> keysValues = new TreeMap<>();
 
         int minStart = Integer.MAX_VALUE;
         int maxStop = Integer.MIN_VALUE;
@@ -571,7 +572,7 @@ public class FormService {
 
     private void makeFormatPullDown(StringBuilder doc, TileLayer tl) {
         doc.append("<tr><td>Format:</td><td>\n");
-        Map<String, String> keysValues = new TreeMap<String, String>();
+        Map<String, String> keysValues = new TreeMap<>();
 
         Iterator<MimeType> iter = tl.getMimeTypes().iterator();
 
@@ -586,7 +587,7 @@ public class FormService {
 
     private void makeGridSetPulldown(StringBuilder doc, TileLayer tl) {
         doc.append("<tr><td>Grid Set:</td><td>\n");
-        Map<String, String> keysValues = new TreeMap<String, String>();
+        Map<String, String> keysValues = new TreeMap<>();
 
         String firstGridSetId = null;
         for (String gridSetId : tl.getGridSubsets()) {
@@ -861,7 +862,8 @@ public class FormService {
 
     private HttpHeaders getHeaders() {
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.TEXT_HTML);
+        Map<String, String> utf8 = Collections.singletonMap("charset", "utf-8");
+        headers.setContentType(new MediaType(MediaType.TEXT_HTML, utf8));
         return headers;
     }
 }

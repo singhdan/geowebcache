@@ -38,7 +38,7 @@ public class ParametersUtils {
      */
     public static String getLegacyParametersKvp(Map<String, String> parameters) {
         StringBuilder sb = new StringBuilder();
-        SortedMap<String, String> sorted = new TreeMap<String, String>(parameters);
+        SortedMap<String, String> sorted = new TreeMap<>(parameters);
         for (Map.Entry<String, String> e : sorted.entrySet()) {
             if (sb.length() == 0) {
                 sb.append("?");
@@ -106,7 +106,7 @@ public class ParametersUtils {
 
     /** Returns the parameters identifier for the given parameters map */
     public static String getId(Map<String, String> parameters) {
-        if (parameters == null || parameters.size() == 0) {
+        if (parameters == null || parameters.isEmpty()) {
             return null;
         }
         String parametersKvp = getLegacyParametersKvp(parameters);
